@@ -1,0 +1,3883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gear Evaluator</title>
+<style>
+:root{
+--bg-0:#170e0d;
+--bg-1:#211512;
+--panel:#321e1b;
+--panel-2:#3f2621;
+--line:#5f403a;
+--gold:#d97706;
+--gold-bright:#f59e0b;
+--gold-dim:#8a5a10;
+--text:#f0e4db;
+--text-dim:#a8918a;
+--text-summary:#e0cec6;
+--epic:#b0221e;
+--epic-glow:#5e150f;
+--heroic:#9b59b6;
+--heroic-glow:#6c3483;
+--keep:#74c69d;
+--keep-bg:#1c3327;
+--sell:#c1666b;
+--sell-bg:#3a2224;
+--hold:#9a8fd1;
+--hold-bg:#2a2740;
+--speed-save:#4fa9b8;
+--reset:#e0793c;
+--reset-bg:#3a2410;
+--hc0:#1a100e;
+--hc1:#3f2621;
+--hc2:#241614;
+--hc3:#1e1210;
+--hc4:#1d1211;
+--grad-r1:#36201c;
+--grad-r2:#281815;
+--grad-end:#0a0606;
+--amber:var(--gold);
+--amber-bright:var(--gold-bright);
+--amber-dim:#a9812f;
+--cfg-bg:var(--hc0);
+--cfg-panel:var(--panel-2);
+--cfg-card:var(--hc4);
+--cfg-line:var(--line);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+background:
+radial-gradient(circle at 20% 0%, var(--grad-r1) 0%, transparent 45%),
+radial-gradient(circle at 85% 15%, var(--grad-r2) 0%, transparent 50%),
+linear-gradient(180deg, var(--bg-1), var(--grad-end) 90%);
+color:var(--text);
+font-family:'Segoe UI', 'Trebuchet MS', Verdana, sans-serif;
+min-height:100vh;
+padding-bottom:60px;
+}
+header{
+padding:28px 24px 18px;
+text-align:center;
+border-bottom:1px solid var(--line);
+background:linear-gradient(180deg, rgba(216,167,74,0.06), transparent);
+}
+header h1{
+margin:0 0 6px;
+font-size:26px;
+letter-spacing:1px;
+color:var(--gold-bright);
+font-weight:700;
+}
+header p{margin:0;color:var(--text-dim);font-size:13px;}
+.controls{
+max-width:1720px;
+margin:20px auto 8px;
+padding:16px 18px;
+background:var(--panel);
+border:1px solid var(--line);
+border-radius:10px;
+display:flex;
+flex-wrap:wrap;
+gap:18px;
+align-items:flex-end;
+box-shadow: inset 0 0 30px rgba(0,0,0,0.25);
+}
+.field{display:flex;flex-direction:column;gap:6px;}
+.field label{font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-dim);}
+.hero-name{font-size:12px;color:var(--text-dim);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%;}
+.field input[type=number]{
+background:var(--hc0);border:1px solid var(--line);color:var(--gold-bright);
+border-radius:6px;padding:8px 10px;width:110px;font-size:14px;
+}
+.field select{
+background:var(--hc0);border:1px solid var(--line);color:var(--text);
+border-radius:6px;padding:8px 10px;font-size:13px;
+}
+.edit-form{display:flex;flex-direction:column;gap:14px;margin-top:12px;}
+.edit-form .field select, .edit-form .field input{width:100%;max-width:280px;}
+.upload-btn{
+position:relative;overflow:hidden;
+background:linear-gradient(180deg,var(--gold-bright),var(--gold));
+border:1px solid var(--gold-bright);color:#2a1608;font-weight:700;
+padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12.5px;
+white-space:nowrap;margin-bottom:1px;
+}
+.upload-btn input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.upload-btn:hover{filter:brightness(1.12);}
+.slot-tabs{
+max-width:1720px;margin:14px auto 0;
+display:flex;gap:8px;padding:8px;
+background:var(--panel);border:1px solid var(--line);border-radius:10px;
+flex-wrap:wrap;
+}
+.slot-tab{
+flex:1;min-width:64px;
+display:flex;flex-direction:column;align-items:center;gap:4px;
+padding:10px 6px 8px;border-radius:8px;cursor:pointer;
+background:transparent;border:1px solid transparent;
+color:var(--text-dim);
+transition:background .12s ease, border-color .12s ease, color .12s ease;
+}
+.slot-tab .stab-icon{font-size:20px;line-height:1;}
+.slot-tab .stab-label{font-size:10.5px;letter-spacing:.3px;}
+.slot-tab .stab-count{font-size:10px;color:var(--text-dim);}
+.slot-tab:hover{background:#282c40;}
+.slot-tab.active{
+background:linear-gradient(180deg, rgba(240,201,106,0.16), rgba(240,201,106,0.05));
+border-color:var(--gold);
+color:var(--gold-bright);
+box-shadow:0 0 14px rgba(240,201,106,0.25) inset;
+}
+.slot-tab.active .stab-count{color:var(--gold-bright);}
+.summary{
+max-width:1720px;margin:14px auto 6px;
+display:flex;gap:12px;flex-wrap:wrap;
+}
+.summary .chip{
+flex:1;min-width:140px;
+background:var(--panel);border:1px solid var(--line);border-radius:10px;
+padding:12px 16px;text-align:center;
+}
+.summary .chip .num{font-size:22px;font-weight:700;color:var(--gold-bright);}
+.summary .chip.keep .num{color:var(--keep);}
+.summary .chip.sell .num{color:var(--sell);}
+.summary .chip.reset .num{color:var(--reset);}
+.summary .chip .lbl{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;}
+#hint{max-width:1720px;margin:40px auto;text-align:center;color:var(--text-dim);font-size:13px;padding:40px;border:1px dashed var(--line);border-radius:12px;}
+.grid{
+max-width:1720px;margin:20px auto;padding:0 12px;
+display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;
+}
+.grid.hero-view{grid-template-columns:repeat(auto-fill,minmax(280px,1fr)) !important;}
+.hero-card{
+background:var(--card-bg,var(--hc2));border:1px solid var(--line);border-radius:12px;
+padding:14px;display:flex;flex-direction:column;gap:8px;
+}
+.hero-card-name{font-weight:700;font-size:15px;color:var(--text);margin-bottom:2px;}
+.hero-slot-row{
+display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;
+background:rgba(255,255,255,0.03);
+}
+.hero-slot-row.clickable{cursor:pointer;}
+.hero-slot-row.clickable:hover{background:rgba(255,255,255,0.07);}
+.hero-slot-row.empty{opacity:0.55;}
+.hero-slot-icon{width:18px;text-align:center;}
+.hero-slot-label{flex:1;font-size:12.5px;color:var(--text-dim);}
+.hero-slot-status{font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:6px;}
+.hero-slot-status.sell-action{cursor:pointer;font:inherit;}
+.hero-slot-status.sell-action:hover{filter:brightness(1.25);}
+.hero-slot-status.hold-action{cursor:pointer;font:inherit;}
+.hero-slot-status.hold-action:hover{filter:brightness(1.25);}
+.hero-slot-status.muted{color:var(--text-dim);font-weight:400;background:none;}
+.hero-card-summary{font-size:12px;color:var(--text-dim);margin-top:4px;border-top:1px dashed var(--line);padding-top:8px;}
+.hero-card-summary.ok{color:var(--keep);}
+.empty-hero-view{grid-column:1/-1;text-align:center;color:var(--text-dim);padding:40px;}
+.cols-field{display:flex;flex-direction:column;gap:6px;}
+.cols-toggle{display:flex;gap:4px;}
+.cols-btn{
+width:30px;height:30px;border-radius:6px;cursor:pointer;
+background:var(--hc0);border:1px solid var(--line);color:var(--text-dim);
+font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center;
+transition:background .12s ease,border-color .12s ease,color .12s ease;
+}
+.cols-btn:hover{border-color:var(--gold);color:var(--text);}
+.cols-btn.active{
+background:linear-gradient(180deg, rgba(240,201,106,0.22), rgba(240,201,106,0.08));
+border-color:var(--gold);color:var(--gold-bright);
+}
+.card{
+background:linear-gradient(180deg, var(--panel-2), var(--bg-1) 70%);
+border:1px solid var(--line);
+border-radius:12px;
+padding:12px;
+cursor:pointer;
+position:relative;
+transition:transform .12s ease, box-shadow .12s ease;
+}
+.card:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(0,0,0,0.45);}
+.card.rank-Epic{border-color:var(--epic); border-width:2px; box-shadow:0 0 0 1px rgba(176,34,30,0.18) inset, 0 0 10px rgba(176,34,30,0.10); background:linear-gradient(180deg, #2e1712, #180c0a 70%);}
+.card.rank-Heroic{border-color:var(--heroic); border-width:2px; box-shadow:0 0 0 1px rgba(155,89,182,0.25) inset, 0 0 14px rgba(155,89,182,0.18); background:linear-gradient(180deg, #2a1f33, #170f1e 70%);}
+.modal.rank-Epic{border-color:var(--epic); box-shadow:0 0 0 1px rgba(176,34,30,0.18) inset, 0 0 16px rgba(176,34,30,0.12); background:linear-gradient(180deg, #2e1712, #180c0a);}
+.modal.rank-Heroic{border-color:var(--heroic); box-shadow:0 0 0 1px rgba(155,89,182,0.25) inset, 0 0 24px rgba(155,89,182,0.22); background:linear-gradient(180deg, #2a1f33, #170f1e);}
+.otherworld-tag{font-weight:700;color:var(--epic);margin-right:4px;}
+.card.rank-Epic.otherworld{
+background: linear-gradient(0deg, rgba(176,34,30,0.35) 0%, #180c0a 48%);
+box-shadow:
+0 0 0 1px rgba(176,34,30,0.18) inset,
+0 0 10px rgba(176,34,30,0.10),
+inset 0 -20px 26px -12px rgba(176,34,30,0.6);
+}
+.modal.rank-Epic.otherworld{
+background: linear-gradient(0deg, rgba(176,34,30,0.32) 0%, #180c0a 44%);
+box-shadow:
+0 0 0 1px rgba(176,34,30,0.18) inset,
+0 0 16px rgba(176,34,30,0.12),
+inset 0 -24px 30px -12px rgba(176,34,30,0.55);
+}
+.icon-wrap.otherworld{background:radial-gradient(circle at 35% 25%, rgba(176,34,30,0.6), #2a0a09 75%);}
+.card-top{display:flex;gap:10px;align-items:center;}
+.icon-frame{position:relative;width:52px;height:52px;flex:none;}
+.icon-wrap{
+width:52px;height:52px;border-radius:9px;flex:none;
+display:flex;align-items:center;justify-content:center;font-size:26px;
+border:1px solid var(--line);
+background:radial-gradient(circle at 35% 25%, rgba(255,255,255,0.08), transparent 60%);
+}
+.rank-Epic .icon-wrap, .icon-wrap.rank-Epic{background:radial-gradient(circle at 35% 25%, rgba(176,34,30,0.5), #2a0a09 75%);border-color:var(--epic);border-width:2px;}
+.rank-Heroic .icon-wrap, .icon-wrap.rank-Heroic{background:radial-gradient(circle at 35% 25%, rgba(155,89,182,0.55), #240a1e 75%);border-color:var(--heroic);border-width:2px;}
+.lvl-badge{position:absolute;top:-6px;left:-6px;background:var(--gold-bright);color:#2a1a05;font-size:10px;font-weight:700;border-radius:5px;padding:1px 4px;border:1px solid var(--bg-0);}
+.title-block{flex:1;min-width:0;}
+.rank-line{font-size:11px;font-weight:700;letter-spacing:.4px;}
+.rank-Epic .rank-line{color:var(--epic);}
+.rank-Heroic .rank-line{color:var(--heroic);}
+.slot-line{font-size:12.5px;color:var(--text);margin-top:1px;}
+.gear-line{font-size:14px;color:var(--gold-bright);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+.main-stat{
+margin-top:10px;padding:7px 10px;border-radius:7px;
+background:var(--hc0);border:1px solid var(--line);
+display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:var(--gold-bright);
+}
+.substats{margin-top:8px;display:flex;flex-direction:column;gap:4px;}
+.substat-row{display:flex;justify-content:space-between;font-size:12.5px;padding:2px 2px;color:var(--text);}
+.substat-row .sv{color:var(--text-dim);}
+.substat-row.mod .sv::before{content:"⇄ ";color:var(--speed-save);}
+.footer-row{
+margin-top:10px;display:flex;justify-content:space-between;align-items:center;
+padding-top:8px;border-top:1px solid var(--line);
+}
+.quality{font-size:13px;font-weight:700;}
+.decision{
+font-size:11px;font-weight:800;letter-spacing:.5px;padding:4px 10px;border-radius:6px;text-transform:uppercase;
+font-family:inherit;border:1px solid transparent;background:none;
+}
+.decision.keep{color:var(--keep);background:var(--keep-bg);border:1px solid #24582f;}
+.decision.sell{color:var(--sell);background:var(--sell-bg);border:1px solid #6b3c3f;}
+.decision.hold{color:var(--hold);background:var(--hold-bg);border:1px solid #453f6b;}
+.decision.speedsave{color:var(--speed-save);background:#0f2e35;border:1px solid #1f5866;}
+.decision.reset{color:var(--reset);background:var(--reset-bg);border:1px solid #6b4a12;}
+.sold-actions{margin-top:8px;display:flex;justify-content:flex-end;gap:8px;}
+.mark-sold-btn{
+font-size:10.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;
+padding:5px 9px;border-radius:6px;cursor:pointer;
+background:var(--hc1);border:1px solid var(--line);color:var(--text-dim);
+transition:background .12s ease,color .12s ease,border-color .12s ease;
+}
+.mark-sold-btn:hover{background:var(--sell-bg);color:var(--sell);border-color:#6b3c3f;}
+.mark-hold-btn{
+font-size:10.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;
+padding:5px 9px;border-radius:6px;cursor:pointer;
+background:var(--hc1);border:1px solid var(--line);color:var(--text-dim);
+transition:background .12s ease,color .12s ease,border-color .12s ease;
+}
+.mark-hold-btn:hover{background:var(--hold-bg);color:var(--hold);border-color:#453f6b;}
+.mark-hold-btn.active{background:var(--hold-bg);color:var(--hold);border-color:#453f6b;}
+.restore-btn{
+font-size:10.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;
+padding:5px 9px;border-radius:6px;cursor:pointer;
+background:#0f2e35;border:1px solid #1f5866;color:var(--speed-save);
+}
+.restore-btn:hover{filter:brightness(1.2);}
+.card.is-sold{opacity:0.55;filter:grayscale(0.4);}
+.card.is-discarded{border-style:dashed;}
+.summary .chip.sold .num{color:var(--speed-save);}
+.sold-toolbar{
+max-width:1720px;margin:0 auto 6px;display:flex;justify-content:flex-end;
+}
+.sold-toolbar button{
+font-size:11.5px;font-weight:700;padding:6px 12px;border-radius:7px;cursor:pointer;
+background:var(--hc1);border:1px solid var(--line);color:var(--text-dim);
+}
+.sold-toolbar button:hover{color:var(--text);border-color:var(--gold);}
+.footer-actions{display:flex;align-items:center;gap:7px;}
+.decision.clickable{cursor:pointer;border-style:solid;}
+.decision.clickable:hover{filter:brightness(1.25);}
+.discard-reason{font-size:11px;color:var(--text-dim);margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);}
+.overlay{
+position:fixed;inset:0;background:rgba(5,2,3,0.82);
+display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto;z-index:50;
+}
+.overlay.open{display:flex;}
+.modal{
+background:linear-gradient(180deg, var(--panel-2), var(--bg-1));
+border:1px solid var(--line);border-radius:14px;max-width:560px;width:100%;
+padding:20px;position:relative;
+}
+.modal .close{
+position:absolute;top:12px;right:14px;background:none;border:none;color:var(--text-dim);
+font-size:20px;cursor:pointer;
+}
+.modal .close:hover{color:var(--text);}
+.modal h2{margin:0 0 4px;font-size:18px;color:var(--gold-bright);}
+.modal .sub{font-size:12px;color:var(--text-dim);margin-bottom:14px;}
+.roll-block{
+background:var(--hc0);border:1px solid var(--line);border-left:3px solid var(--line);border-radius:9px;padding:11px 13px;margin-bottom:11px;
+}
+.roll-block.g{border-left-color:var(--keep);}
+.roll-block.o{border-left-color:var(--gold);}
+.roll-block.r{border-left-color:var(--sell);}
+.card.rank-Epic .main-stat, .modal.rank-Epic .main-stat, .modal.rank-Epic .legend{background:#1c0a09;border-color:#4a1815;}
+.card.rank-Heroic .main-stat, .modal.rank-Heroic .main-stat, .modal.rank-Heroic .legend{background:#170a1f;border-color:#3c1e4a;}
+.card.rank-Epic .footer-row{border-top-color:#4a1815;}
+.card.rank-Heroic .footer-row{border-top-color:#3c1e4a;}
+.card.otherworld .footer-row{border-top:none;}
+.card.rank-Epic .mark-sold-btn, .modal.rank-Epic .mark-sold-btn{background:#2e1114;border-color:#4a1815;}
+.card.rank-Heroic .mark-sold-btn, .modal.rank-Heroic .mark-sold-btn{background:#241129;border-color:#3c1e4a;}
+.modal.rank-Epic .roll-block{background:#1c0a09;border-top-color:#4a1815;border-right-color:#4a1815;border-bottom-color:#4a1815;border-left-color:#4a1815;}
+.modal.rank-Heroic .roll-block{background:#170a1f;border-top-color:#3c1e4a;border-right-color:#3c1e4a;border-bottom-color:#3c1e4a;border-left-color:#3c1e4a;}
+.roll-block .rb-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;row-gap:6px;font-size:13.5px;font-weight:700;color:var(--text);margin-bottom:7px;}
+.roll-block .rb-head .conv-range-group{display:flex;align-items:center;gap:6px;}
+.roll-block .rb-head .avg{
+font-size:14px;font-weight:800;padding:2px 9px;border-radius:20px;letter-spacing:0.2px;
+}
+.roll-block .rb-head .avg.g{color:var(--keep);background:rgba(95,213,122,0.15);}
+.roll-block .rb-head .avg.o{color:var(--gold-bright);background:rgba(217,178,95,0.15);}
+.roll-block .rb-head .avg.r{color:var(--sell);background:rgba(193,102,107,0.15);}
+.max-hint{font-weight:400;font-size:11.5px;color:var(--text-dim);}
+.conv-mark{color:var(--speed-save);}
+.theo-bar{display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:9px;border-top:1px dashed #351b20;}
+.theo-bar.mini{margin-top:6px;padding-top:0;border-top:none;}
+.theo-edge{font-size:11px;color:var(--text-dim);font-weight:600;flex-shrink:0;}
+.theo-value{font-size:12px;font-weight:800;flex-shrink:0;min-width:34px;text-align:right;}
+.theo-track{position:relative;flex:1;height:4px;background:#3a2226;border-radius:2px;overflow:visible;}
+.chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px;}
+.chip-row.inline{margin-bottom:0;flex-shrink:0;}
+.roll-range-caption{font-size:10.5px;color:var(--text-dim);margin-top:5px;}
+.chip{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:6px;line-height:1.5;white-space:nowrap;}
+.cfg-table{width:100%;border-collapse:collapse;margin:10px 0 18px;font-size:12.5px;}
+.cfg-table th{text-align:left;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:.4px;font-size:10.5px;padding:4px 6px;border-bottom:1px solid var(--line);}
+.cfg-table td{padding:5px 6px;border-bottom:1px solid #2a1519;}
+.cfg-table input[type=number]{
+background:var(--hc0);border:1px solid var(--line);color:var(--gold-bright);
+border-radius:5px;padding:5px 6px;width:64px;font-size:12.5px;
+}
+.cfg-table td.catname{color:var(--text);font-weight:600;white-space:nowrap;}
+.cfg-note{font-size:11.5px;color:var(--text-dim);background:var(--hc0);border:1px solid var(--line);border-radius:8px;padding:9px 11px;margin-bottom:12px;line-height:1.5;}
+.cfg-row-global{display:flex;gap:14px;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap;}
+.cfg-actions{display:flex;gap:10px;margin-top:16px;}
+.cfg-actions button{
+padding:9px 16px;border-radius:8px;font-weight:700;font-size:12.5px;cursor:pointer;border:1px solid var(--line);
+}
+.cfg-save{background:linear-gradient(180deg,var(--gold-bright),var(--gold));border-color:var(--gold-bright);color:#2a1608;}
+.cfg-reset{background:var(--hc1);color:var(--text-dim);}
+.cfg-section-title{font-size:13px;font-weight:700;color:var(--gold-bright);margin:14px 0 4px;}
+.cfg-range{font-size:10px;color:var(--text-dim);margin-top:2px;white-space:nowrap;}
+.cfg-hint{font-size:11px;color:var(--text-dim);margin:0 0 10px;line-height:1.4;}
+.conv-box{width:26px;height:26px;border:1px solid var(--line);border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--text-dim);background:var(--panel-2);user-select:none;transition:background .1s,border-color .1s,color .1s;}
+.conv-box:hover{border-color:var(--gold-bright);}
+.conv-box.on{background:linear-gradient(180deg,var(--gold-bright),var(--gold));border-color:var(--gold-bright);color:#2a1608;}
+.conv-box.disabled{opacity:.25;cursor:not-allowed;pointer-events:none;}
+.excl-box{width:16px;height:16px;border:1px solid var(--line);border-radius:4px;cursor:pointer;background:var(--panel-2);display:inline-block;transition:background .1s,border-color .1s;}
+.excl-box:hover{border-color:#e07a5f;}
+.excl-box.on{background:linear-gradient(180deg,var(--gold-bright),var(--gold));border-color:var(--gold-bright);}
+.chip.base{background:rgba(191,14,11,0.15);color:#ff6b68;border:1px solid rgba(191,14,11,0.35);}
+.chip.base.rank-Epic{background:rgba(176,34,30,0.15);color:#d16657;border:1px solid rgba(176,34,30,0.32);}
+.chip.base.rank-Heroic{background:rgba(155,89,182,0.15);color:#c39bd3;border:1px solid rgba(155,89,182,0.35);}
+.chip.g, .chip.o, .chip.r{background:rgba(240,201,106,0.15);color:var(--gold-bright);border:1px solid rgba(240,201,106,0.35);}
+.chip.reforge{background:rgba(79,169,184,0.15);color:var(--speed-save);border:1px solid rgba(79,169,184,0.35);}
+.theo-fill{position:absolute;top:0;left:0;height:100%;border-radius:2px;}
+.theo-ghost{position:absolute;top:0;height:100%;opacity:0.75;background-repeat:repeat;background-image:repeating-linear-gradient(135deg, rgba(255,255,255,0.55) 0px, rgba(255,255,255,0.55) 3px, transparent 3px 7px);border-radius:0 2px 2px 0;box-shadow:0 0 4px rgba(0,0,0,0.3) inset;}
+.theo-ghost-lost{position:absolute;top:0;height:100%;opacity:0.55;background-color:var(--sell);background-repeat:repeat;background-image:repeating-linear-gradient(135deg, rgba(0,0,0,0.3) 0px, rgba(0,0,0,0.3) 3px, transparent 3px 7px);border-radius:0 2px 2px 0;box-shadow:0 0 4px rgba(0,0,0,0.3) inset;}
+.theo-mark{position:absolute;top:-3px;bottom:-3px;width:2px;background:rgba(255,255,255,0.85);transform:translateX(-1px);}
+.theo-mark.target{background:hsl(280,75%,68%);opacity:0.85;}
+.theo-mark-label{position:absolute;top:-15px;transform:translateX(-50%);font-size:10px;font-weight:700;color:var(--text-dim);white-space:nowrap;}
+.theo-mark-label.below{top:auto;bottom:-17px;color:#fff;}
+.theo-mark-label.below.stacked{bottom:-17px;}
+.theo-mark-label.below.target{bottom:-17px;color:hsl(280,75%,75%);font-weight:600;}
+.theo-mark-label.below.target.stacked{bottom:-31px;}
+.theo-bar:has(.theo-mark-label.below){margin-bottom:14px;}
+.theo-bar:has(.theo-mark-label.below.target.stacked){margin-bottom:28px;}
+.roll-range{font-weight:400;font-size:11px;color:var(--text-dim);}
+.modal-head{display:flex;gap:12px;align-items:center;margin-bottom:4px;}
+.modal-head .icon-wrap{width:54px;height:54px;font-size:26px;}
+.modal-head .mh-text h2{margin:0;font-size:17px;color:var(--gold-bright);}
+.modal-head .mh-text .rank-line{margin-top:2px;}
+.legend{
+font-size:11.5px;color:var(--text-dim);line-height:1.5;
+background:var(--hc0);border:1px solid var(--line);border-radius:8px;
+padding:0;margin:10px 0 14px;overflow:hidden;
+}
+.legend summary{
+list-style:none;cursor:pointer;padding:8px 10px;
+display:flex;align-items:center;justify-content:space-between;
+user-select:none;
+}
+.legend summary::-webkit-details-marker{display:none;}
+.legend summary .lbl{color:var(--text);font-weight:700;}
+.legend summary .chev{transition:transform .15s;color:var(--text-dim);}
+.legend[open] summary .chev{transform:rotate(180deg);}
+.legend .legend-body{padding:0 10px 10px;}
+.legend b{color:var(--text);}
+.roll-count{color:var(--gold-bright);font-weight:700;margin-left:3px;}
+.stat-summary-line{font-size:12.5px;color:var(--text-summary);margin-bottom:9px;line-height:1.6;}
+.stat-summary-line b{color:var(--text);font-weight:700;}
+.stat-summary-line i{color:var(--text-dim);font-style:normal;}
+.info-tag{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;color:#8fa8c9;background:rgba(143,168,201,0.14);border:1px solid rgba(143,168,201,0.3);border-radius:4px;padding:1px 5px;margin-right:5px;vertical-align:1px;}
+.bar-track{
+height:9px;border-radius:5px;background:var(--hc2);border:1px solid var(--line);
+margin-top:4px;overflow:hidden;position:relative;
+}
+.bar-fill{height:100%;border-radius:5px;min-width:3px;}
+.bar-fill.g{background:linear-gradient(90deg,#3fa85c,var(--keep));}
+.bar-fill.o{background:linear-gradient(90deg,#b8933f,var(--gold));}
+.bar-fill.r{background:linear-gradient(90deg,#8a4448,var(--sell));}
+.roll-line{display:flex;flex-direction:column;gap:0;padding:7px 0;border-top:1px dashed #351b20;}
+.roll-line:first-child{border-top:none;}
+.roll-line .rl-top{display:flex;justify-content:space-between;font-size:12.5px;color:var(--text);}
+.roll-line.base .rl-top{color:#9c8580;font-style:italic;}
+.roll-line .q{font-weight:800;font-size:13px;}
+.q.g{color:var(--keep);}
+.q.o{color:var(--gold-bright);}
+.q.r{color:var(--sell);}
+.note{font-size:11px;color:var(--speed-save);margin-top:4px;}
+#configOverlay .modal{
+background:linear-gradient(180deg, var(--panel-2), var(--bg-1));
+border:1px solid var(--line);
+border-radius:18px;
+max-width:640px;
+padding:26px 26px 22px;
+box-shadow:0 20px 60px rgba(0,0,0,0.55);
+}
+.cfg2-header{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
+.cfg2-header .dot{width:8px;height:8px;border-radius:50%;background:var(--amber-bright);box-shadow:0 0 8px var(--amber-bright);flex-shrink:0;}
+.cfg2-header h2{margin:0;font-size:15px;letter-spacing:0.6px;text-transform:uppercase;color:var(--amber-bright);font-weight:700;}
+.cfg2-tabrow{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+.cfg2-tabsline{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--cfg-line);}
+.cfg2-tabsline .cfg2-tabgroup{display:flex;gap:8px;flex-wrap:wrap;}
+.cfg2-pill{
+border:1px solid var(--cfg-line);
+background:var(--hc3);
+color:var(--text-dim);
+padding:7px 16px;
+border-radius:999px;
+font-size:12.5px;
+font-weight:700;
+cursor:pointer;
+transition:background .12s,border-color .12s,color .12s;
+white-space:nowrap;
+}
+.cfg2-pill:hover{border-color:var(--amber-bright);color:var(--text);}
+.cfg2-pill.active{
+background:linear-gradient(180deg,var(--amber-bright),var(--amber));
+border-color:var(--amber-bright);
+color:#241203;
+}
+.cfg2-pill.active.ghost{
+background:transparent;
+color:var(--amber-bright);
+border-color:var(--amber-bright);
+box-shadow:none;
+}
+.cfg2-sectiontitle{
+font-size:11px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;
+color:var(--amber-bright);margin:18px 0 10px;
+}
+.cfg2-rows{
+background:var(--cfg-card);
+border:1px solid var(--cfg-line);
+border-radius:12px;
+overflow:hidden;
+}
+.cfg2-row{
+padding:9px 14px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:12px;
+}
+.cfg2-row:not(:first-child){border-top:1px solid var(--cfg-line);}
+.cfg2-row .cfg2-namewrap{min-width:0;display:flex;align-items:baseline;gap:8px;}
+.cfg2-row .cfg2-name{font-size:12.5px;font-weight:700;color:var(--text);white-space:nowrap;}
+.cfg2-row .cfg2-range{font-size:10.5px;color:var(--text-dim);}
+.cfg2-row .cfg2-inputgroup{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.cfg2-row .cfg2-inputgroup .excl-box{margin-right:2px;}
+.cfg2-row input[type=number].cfg2-input{
+background:var(--hc0);
+border:1px solid var(--cfg-line);
+color:var(--amber-bright);
+border-radius:7px;
+padding:6px 8px;
+width:58px;
+font-size:12.5px;
+font-weight:700;
+text-align:center;
+}
+.cfg2-row input[type=number].cfg2-input:focus{outline:none;border-color:var(--amber-bright);}
+.cfg2-convtable{
+background:var(--cfg-card);
+border:1px solid var(--cfg-line);
+border-radius:12px;
+overflow:hidden;
+}
+.cfg2-convtable .conv-head-row, .cfg2-convtable .cfg2-convrow{
+display:grid;
+grid-template-columns:1fr repeat(5,30px);
+align-items:center;
+gap:6px;
+padding:6px 14px;
+}
+.cfg2-convtable .conv-head-row{
+padding:8px 14px 6px;
+font-size:9.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--text-dim);
+}
+.cfg2-convtable .conv-head-row span{text-align:center;}
+.cfg2-convtable .cfg2-convrow:not(:first-child){border-top:1px solid var(--cfg-line);}
+.cfg2-convrow .cfg2-name{font-size:12px;font-weight:600;color:var(--text);}
+.cfg2-convboxes{display:contents;}
+.cfg2-convboxes .conv-box{
+width:26px;height:26px;border-radius:7px;margin:0 auto;
+background:var(--hc0);border:1px solid var(--cfg-line);color:var(--text-dim);
+font-size:11px;font-weight:700;
+}
+.cfg2-convboxes .conv-box.on{
+background:linear-gradient(180deg,var(--amber-bright),var(--amber));
+border-color:var(--amber-bright);color:#2a1608;
+}
+.cfg2-convboxes .conv-box.disabled{opacity:.2;}
+.cfg2-toggleline{
+background:var(--cfg-card);border:1px solid var(--cfg-line);border-radius:12px;
+padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:14px;
+flex-wrap:wrap;margin-bottom:10px;
+}
+.cfg2-toggleline-left{display:flex;align-items:center;gap:10px;}
+.cfg2-toggleline-left .excl-box{width:18px;height:18px;border-radius:5px;flex-shrink:0;}
+.cfg2-toggleline-left .excl-box.on{background:linear-gradient(180deg,var(--amber-bright),var(--amber));border-color:var(--amber-bright);}
+.cfg2-toggleline-left label{font-size:12.5px;color:var(--text-dim);cursor:pointer;}
+.cfg2-toggleline-right{display:flex;align-items:center;gap:10px;}
+.cfg2-toggleline-right label{font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--text-dim);white-space:nowrap;}
+.cfg2-toggleline-right input{
+background:var(--hc0);border:1px solid var(--cfg-line);color:var(--amber-bright);
+border-radius:8px;padding:7px 10px;width:56px;font-size:13px;font-weight:700;text-align:center;
+}
+.cfg2-savebar{margin-top:20px;display:flex;justify-content:flex-end;}
+.cfg2-savebtn{
+padding:11px 26px;border-radius:10px;font-weight:800;font-size:13px;
+cursor:pointer;border:none;letter-spacing:.3px;
+background:linear-gradient(180deg,var(--amber-bright),var(--amber));
+color:#2a1608;
+}
+.cfg2-savebtn:hover{filter:brightness(1.12);}
+.cfg2-tablewrap{
+background:var(--cfg-card);border:1px solid var(--cfg-line);border-radius:12px;
+overflow:hidden;
+}
+.ie-rows{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+.ie-row{
+display:flex;align-items:center;justify-content:space-between;gap:10px;
+background:var(--cfg-card);border:1px solid var(--cfg-line);border-radius:8px;
+padding:10px 12px;
+}
+.ie-name{font-size:13px;color:var(--text);}
+.ie-name .ie-sub{font-size:11px;color:var(--text-dim);font-weight:400;}
+.ie-actions{display:flex;gap:6px;}
+.ie-btn{
+position:relative;overflow:hidden;
+background:var(--hc0);border:1px solid var(--cfg-line);color:var(--text-dim);
+padding:6px 12px;border-radius:6px;cursor:pointer;font-size:11.5px;font-weight:600;
+white-space:nowrap;
+}
+.ie-btn:hover{border-color:var(--gold);color:var(--text);}
+.ie-import input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.ie-msg{font-size:11.5px;margin-top:8px;min-height:14px;color:var(--keep);}
+.ie-msg.err{color:var(--sell);}
+#configModalContent .cfg-table{
+width:100%;border-collapse:collapse;margin:0;font-size:12px;
+}
+#configModalContent .cfg-table th{
+color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.4px;font-size:9.5px;
+padding:8px 8px 6px;border-bottom:1px solid var(--cfg-line);text-align:center;
+}
+#configModalContent .cfg-table th:first-child{text-align:left;}
+#configModalContent .cfg-table td{
+padding:7px 8px;text-align:center;
+}
+#configModalContent .cfg-table tr:not(:last-child) td{border-bottom:1px solid var(--cfg-line);}
+#configModalContent .cfg-table td.catname{color:var(--text);font-weight:700;text-align:left;white-space:nowrap;}
+#configModalContent .cfg-table input[type=number]{
+background:var(--hc0);border:1px solid var(--cfg-line);color:var(--amber-bright);
+border-radius:7px;padding:6px 7px;width:52px;font-size:12px;font-weight:700;text-align:center;
+}
+#configModalContent .cfg-table .cfg-range{font-size:9px;color:var(--text-dim);margin-top:2px;white-space:nowrap;}
+#configModalContent .cfg-table .excl-cell{text-align:center;}
+#aqListOverlay .modal, #aqEditorOverlay .modal{
+background:linear-gradient(180deg, var(--panel-2), var(--bg-1));
+border:1px solid var(--line);
+max-width:1400px;
+}
+.aq-btn{
+background:linear-gradient(180deg,var(--gold-bright),var(--gold));border:1px solid var(--gold-bright);
+color:#2a1608;font-weight:700;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:13px;
+}
+.aq-btn.small{padding:6px 10px;font-size:11.5px;}
+.aq-btn.secondary{background:var(--hc1);border:1px solid var(--line);color:var(--text);}
+.aq-btn:hover{filter:brightness(1.12);}
+.aq-list{max-width:100%;margin:16px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
+.aq-card{background:var(--hc1);border:1px solid var(--line);border-radius:10px;padding:12px;}
+.aq-card h3{margin:0 0 4px;font-size:14px;color:var(--gold-bright);}
+.aq-card .aq-meta{font-size:11px;color:var(--text-dim);margin-bottom:8px;}
+.aq-slot{font-size:11.5px;margin:3px 0;color:var(--text);}
+.aq-slot b{color:var(--text-dim);font-weight:600;margin-right:4px;}
+.aq-actions{margin-top:10px;display:flex;gap:6px;}
+.aq-top-fields{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px;}
+.aq-top-fields .field{flex:1;min-width:200px;margin-bottom:0;}
+.aq-top-fields .field label{display:block;font-size:11px;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;letter-spacing:.4px;}
+.aq-top-fields .field input[type=text],.aq-top-fields .field select,.aq-top-fields .field input[type=number]{
+width:100%;background:var(--hc0);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:8px 10px;font-size:13px;
+}
+#aqSlotEditors{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+@media (max-width:1000px){ #aqSlotEditors{grid-template-columns:repeat(2,1fr);} }
+@media (max-width:640px){ #aqSlotEditors{grid-template-columns:1fr;} }
+.aq-slot-editor{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--hc0);display:flex;flex-direction:column;}
+.aq-slot-editor h4{margin:0 0 8px;color:var(--gold-bright);font-size:13px;}
+.aq-stat-checks{display:flex;flex-wrap:wrap;gap:5px;}
+.aq-mainstat-block{padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.06);}
+.aq-stat-chip{font-size:11px;padding:6px 12px;border-radius:20px;border:1px solid var(--line);background:var(--hc0);color:var(--text-dim);cursor:pointer;user-select:none;transition:all .15s;}
+.aq-stat-chip:hover{border-color:var(--text-dim);}
+.aq-stat-chip.main-chip{background:transparent;border-style:dashed;}
+.aq-stat-chip.on{background:rgba(245,158,11,0.1);color:var(--gold-bright);border-color:var(--gold-bright);border-width:2px;font-weight:700;padding:5px 11px;}
+.aq-stat-chip.main-chip.on{background:rgba(245,158,11,0.1);color:var(--gold-bright);border-color:var(--gold-bright);border-style:solid;}
+.qsf-row{display:none;align-items:center;gap:10px;flex-wrap:wrap;}
+.qsf-row.open{display:flex;}
+.qsf-row .qsf-label{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-dim);white-space:nowrap;}
+.qsf-sep{width:1px;align-self:stretch;background:var(--line);margin:0 2px;}
+.qsf-toggle-btn{
+background:var(--hc0);border:1px solid var(--line);color:var(--text);
+border-radius:6px;padding:8px 14px;font-size:13px;cursor:pointer;white-space:nowrap;
+font-family:inherit;transition:border-color .12s ease,color .12s ease,background .12s ease,box-shadow .12s ease;
+display:inline-flex;align-items:center;gap:9px;
+}
+.qsf-toggle-btn:hover{border-color:var(--gold);color:var(--gold-bright);}
+.qsf-toggle-btn.has-filters{border-color:var(--gold);color:var(--gold-bright);background:rgba(245,158,11,0.08);}
+.qsf-toggle-btn.open{
+border-color:var(--gold-bright);color:var(--gold-bright);
+background:linear-gradient(180deg, rgba(240,201,106,0.18), rgba(240,201,106,0.06));
+box-shadow:0 0 14px rgba(240,201,106,0.2) inset;
+}
+.qsf-switch{
+position:relative;flex:none;width:26px;height:15px;border-radius:8px;
+background:var(--panel-2);border:1px solid var(--line);
+transition:background-color .22s ease,border-color .22s ease;
+}
+.qsf-switch-thumb{
+position:absolute;top:1px;left:1px;width:11px;height:11px;border-radius:50%;
+background:var(--text-dim);
+transform:translateX(0);
+}
+.qsf-toggle-btn.open .qsf-switch{background:var(--gold-bright);border-color:var(--gold-bright);}
+.qsf-toggle-btn.open .qsf-switch-thumb{background:var(--hc0);transform:translateX(11px);}
+@keyframes qsfThumbOn{
+0%{ transform:translateX(0) scaleX(1) scaleY(1); }
+45%{ transform:translateX(9px) scaleX(1.35) scaleY(0.75); }
+100%{ transform:translateX(11px) scaleX(1) scaleY(1); }
+}
+@keyframes qsfThumbOff{
+0%{ transform:translateX(11px) scaleX(1) scaleY(1); }
+45%{ transform:translateX(2px) scaleX(1.35) scaleY(0.75); }
+100%{ transform:translateX(0) scaleX(1) scaleY(1); }
+}
+.qsf-switch-thumb.anim-on{animation:qsfThumbOn .38s cubic-bezier(.34,1.56,.64,1);}
+.qsf-switch-thumb.anim-off{animation:qsfThumbOff .34s cubic-bezier(.34,1.56,.64,1);}
+@media (prefers-reduced-motion: reduce){
+.qsf-switch-thumb{transition-duration:1ms !important;animation:none !important;}
+}
+.qsf-chip{display:flex;align-items:center;gap:6px;background:rgba(245,158,11,0.1);color:var(--gold-bright);
+border:2px solid var(--gold-bright);border-radius:20px;padding:5px 6px 5px 12px;font-size:11px;font-weight:700;}
+.qsf-chip input{width:52px;background:var(--hc0);border:1px solid var(--gold-dim);color:var(--text);
+border-radius:12px;padding:3px 8px;font-size:11px;text-align:center;}
+.qsf-chip input::placeholder{color:var(--text-dim);}
+.qsf-chip .x{cursor:pointer;color:var(--text-dim);font-weight:400;padding:0 2px;}
+.qsf-chip .x:hover{color:var(--text);}
+.qsf-clear{margin-left:auto;color:var(--text-dim);font-size:12px;text-decoration:underline;cursor:pointer;}
+.qsf-menu{position:absolute;z-index:80;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;
+padding:6px;display:none;box-shadow:0 8px 20px rgba(0,0,0,.5);}
+.qsf-menu.open{display:block;}
+.qsf-menu div{padding:7px 12px;font-size:12px;border-radius:5px;cursor:pointer;white-space:nowrap;color:var(--text);}
+.qsf-menu div:hover{background:var(--hc0);color:var(--gold-bright);}
+.aq-multiset-popover{
+position:fixed;z-index:10000;width:260px;
+background:linear-gradient(180deg, var(--panel-2), var(--bg-1));
+border:1px solid var(--line);border-radius:10px;
+padding:12px;box-shadow:0 14px 34px rgba(0,0,0,0.5);
+}
+.aq-multiset-title{font-size:11.5px;color:var(--text-dim);margin-bottom:8px;}
+.aq-multiset-empty{font-size:11.5px;color:var(--text-dim);}
+.aq-multiset-chips{display:flex;flex-wrap:wrap;gap:6px;max-height:180px;overflow-y:auto;margin-bottom:10px;}
+.aq-multiset-actions{display:flex;justify-content:flex-end;gap:6px;}
+#aqMinSubstats{width:100%;background:var(--hc0);border:1px solid var(--line);color:var(--gold-bright);border-radius:6px;padding:8px 10px;font-size:13px;}
+.aq-modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;}
+.aq-layout-toggle{display:flex;gap:6px;align-items:center;margin:0 0 14px;}
+.aq-layout-toggle span{font-size:11px;text-transform:uppercase;color:var(--text-dim);letter-spacing:.4px;margin-right:2px;}
+.aq-layout-btn{background:var(--hc0);border:1px solid var(--line);color:var(--text-dim);padding:6px 12px;border-radius:7px;font-size:11.5px;cursor:pointer;}
+.aq-layout-btn.active{background:linear-gradient(180deg,var(--gold-bright),var(--gold));border-color:var(--gold-bright);color:#2a1608;font-weight:700;}
+#aqSlotEditorsTabs{
+display:none;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--hc1);
+}
+#aqSlotEditorsTabs.active{display:flex;}
+.aq-tabs-sidebar{width:170px;flex-shrink:0;background:var(--hc0);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:6px 0;}
+.aq-tabs-sidebar-btn{background:transparent;border:none;border-left:3px solid transparent;color:var(--text-dim);padding:12px 16px;text-align:left;cursor:pointer;font-size:13px;font-weight:600;}
+.aq-tabs-sidebar-btn:hover{background:rgba(255,255,255,0.05);color:var(--text);}
+.aq-tabs-sidebar-btn.active{background:rgba(255,255,255,0.05);color:var(--text);border-left-color:var(--gold-bright);}
+.aq-tabs-content{flex:1;padding:20px;min-width:0;background:var(--hc0);}
+.aq-tabs-content h3{margin:0 0 14px;color:var(--gold-bright);font-size:15px;}
+.aq-tabs-pane{display:none;}
+.aq-tabs-pane.active{display:block;}
+.aq-tabs-mainstat-label{font-size:11px;text-transform:uppercase;color:var(--text-dim);letter-spacing:.4px;margin:0 0 8px;}
+.aq-pill-grid{display:flex;flex-wrap:wrap;gap:8px;}
+.aq-pill-grid + .aq-tabs-mainstat-label{margin-top:18px;}
+@media (max-width:640px){ #aqSlotEditorsTabs{flex-direction:column;} .aq-tabs-sidebar{width:100%;flex-direction:row;flex-wrap:wrap;} }
+
+/* =========================================================
+   MOBILE ADAPTATION (vertical phone layout, any width)
+   ========================================================= */
+@media (max-width:760px){
+html,body{overflow-x:hidden;}
+body{padding-bottom:90px;}
+
+header{padding:16px 14px 12px;}
+header h1{font-size:19px;}
+header p{font-size:11.5px;}
+
+.controls{
+max-width:100%;
+margin:12px 10px 8px;
+padding:12px;
+flex-direction:column;
+align-items:stretch;
+gap:10px;
+}
+.controls > .upload-btn{width:100%;text-align:center;box-sizing:border-box;}
+.field{width:100%;}
+.field input[type=number], .field select{width:100%;box-sizing:border-box;font-size:14px;padding:10px;}
+.hero-name{max-width:100%;white-space:normal;}
+.cols-field{display:none;}
+#qsfField{width:100%;}
+.qsf-toggle-btn{width:100%;justify-content:center;box-sizing:border-box;}
+.qsf-row{width:100%;}
+.qsf-row .qsf-sep{display:none;}
+.qsf-clear{margin-left:0;}
+
+.slot-tabs{
+max-width:100%;margin:12px 10px 0;
+flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;
+}
+.slot-tab{min-width:58px;flex:none;}
+
+.summary{max-width:100%;margin:12px 10px 6px;gap:8px;}
+.summary .chip{min-width:calc(50% - 4px);padding:10px;}
+
+.sold-toolbar{max-width:100%;margin:0 10px 6px;flex-wrap:wrap;}
+.sold-toolbar button{flex:1;}
+
+.grid, .grid.hero-view{
+max-width:100%;margin:14px 0;padding:0 10px;
+grid-template-columns:1fr !important;
+gap:12px;
+}
+.aq-list{grid-template-columns:1fr;}
+
+#hint{max-width:100%;margin:26px 12px;padding:24px 14px;}
+
+/* modals go full-screen instead of a centered box */
+.overlay{padding:0;}
+.modal,
+#configOverlay .modal,
+#aqListOverlay .modal,
+#aqEditorOverlay .modal{
+max-width:100%;width:100%;min-height:100vh;
+border-radius:0;
+padding:18px 14px 90px;
+box-sizing:border-box;
+}
+.edit-form .field select, .edit-form .field input{max-width:100%;}
+
+.cfg2-tabsline{gap:8px;}
+.cfg2-pill{padding:7px 12px;font-size:12px;}
+.cfg2-row{flex-wrap:wrap;row-gap:6px;}
+.cfg2-row .cfg2-namewrap{flex-wrap:wrap;}
+.cfg2-row .cfg2-name{white-space:normal;}
+.cfg2-row .cfg2-inputgroup{margin-left:auto;}
+
+/* "Modifications" table (Method 1 & Method 2 share it): each stat used to be
+   name + 5 tiny boxes squeezed onto one line. Stack the boxes under the name. */
+.cfg2-convtable .conv-head-row{display:none;}
+.cfg2-convtable .cfg2-convrow{
+display:flex;flex-direction:column;align-items:flex-start;gap:8px;
+padding:10px 12px;
+}
+.cfg2-convrow .cfg2-name{white-space:normal;}
+.cfg2-convboxes{display:flex !important;gap:8px;flex-wrap:wrap;}
+.cfg2-convboxes .conv-box{margin:0;width:30px;height:30px;}
+
+/* Method 2's bonus-level table has too many numeric columns for a phone.
+   Pin the stat name and let the rest of the row scroll horizontally instead
+   of shrinking every column into unreadable inputs. */
+.cfg2-tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;position:relative;}
+.cfg-table, #configModalContent .cfg-table{min-width:900px;table-layout:fixed;}
+.cfg-table td.catname, #configModalContent .cfg-table td.catname{
+position:sticky;left:0;background:var(--cfg-card);z-index:1;
+width:104px;max-width:104px;white-space:normal !important;
+font-size:10.5px;line-height:1.25;
+box-shadow:3px 0 6px -2px rgba(0,0,0,0.55);
+}
+.cfg-table td:not(.catname), #configModalContent .cfg-table td:not(.catname){width:88px;}
+/* visual cue that the row keeps going: a soft fade at the right edge of the scroll area */
+.cfg2-tablewrap::after{
+content:'';position:absolute;top:0;right:0;bottom:0;width:14px;pointer-events:none;
+background:linear-gradient(90deg, transparent, rgba(0,0,0,0.35));
+}
+
+.cfg2-toggleline{flex-direction:column;align-items:flex-start;}
+.cfg2-toggleline-right{width:100%;justify-content:space-between;}
+.cfg2-savebar{justify-content:stretch;}
+.cfg2-savebtn{width:100%;}
+
+.aq-top-fields{flex-direction:column;align-items:stretch;gap:10px;}
+.aq-top-fields .field{min-width:0;}
+#aqSlotEditors{grid-template-columns:1fr;}
+.aq-tabs-sidebar{width:100%;flex-direction:row;flex-wrap:wrap;}
+#aqSlotEditorsTabs{flex-direction:column;}
+.aq-tabs-content{padding:14px;}
+.aq-modal-actions{flex-wrap:wrap;}
+.aq-modal-actions .aq-btn{flex:1;}
+
+.card{padding:11px;}
+.card-top{gap:8px;}
+.icon-frame, .icon-wrap{width:44px;height:44px;}
+.icon-wrap{font-size:21px;}
+.gear-line{font-size:13px;}
+.main-stat{font-size:13px;padding:6px 9px;}
+.footer-row{flex-wrap:wrap;gap:8px;}
+
+.modal-head .icon-wrap{width:46px;height:46px;font-size:22px;}
+.modal-head .mh-text h2{font-size:15px;}
+.roll-block .rb-head{font-size:12.5px;}
+}
+
+@media (max-width:400px){
+header h1{font-size:17.5px;}
+.summary .chip{min-width:100%;}
+.icon-frame, .icon-wrap{width:40px;height:40px;}
+}
+</style>
+</head>
+<body>
+<header>
+<h1>Gear Evaluator</h1>
+</header>
+<div class="controls">
+<div class="upload-btn">
+Upload gear.txt <input type="file" id="fileInput" accept=".json,.txt">
+</div>
+<button class="upload-btn" id="openConfigBtn" type="button">⚙ Settings</button>
+<button class="upload-btn" id="openArqsBtn" type="button">⚙ ArqS</button>
+<div class="field">
+<label>Speed check (≥)</label>
+<input type="number" id="speedThreshold" value="0" min="0">
+</div>
+<div class="field">
+<label>Show</label>
+<select id="filterSelect">
+<option value="all">All</option>
+<option value="keep">Keep</option>
+<option value="sell">Sell</option>
+<option value="reset">Reset</option>
+<option value="sold">Sold</option>
+<option value="discarded">Discarded</option>
+</select>
+</div>
+<div class="field">
+<label>Set</label>
+<select id="setSelect">
+<option value="all">All</option>
+</select>
+</div>
+<div class="field" id="archFilterField">
+<label>Archetype</label>
+<select id="archFilterSelect">
+<option value="all">All</option>
+</select>
+</div>
+<div class="field">
+<label>Rarity</label>
+<select id="rankSelect">
+<option value="all">All</option>
+<option value="Epic">Epic</option>
+<option value="Heroic">Heroic</option>
+<option value="Otherworldly">Otherworldly</option>
+</select>
+</div>
+<div class="field">
+<label>Modified</label>
+<select id="convSelect">
+<option value="all">All</option>
+<option value="yes">Modified only</option>
+<option value="no">Not modified</option>
+</select>
+</div>
+<div class="field">
+<label>Level</label>
+<select id="levelSelect">
+<option value="all">All</option>
+<option value="85">85</option>
+<option value="88">88</option>
+<option value="90">90</option>
+</select>
+</div>
+<div class="field">
+<label>Sort by</label>
+<select id="sortSelect">
+<option value="age_new">Newest first</option>
+<option value="age_old">Oldest first</option>
+</select>
+</div>
+<div class="field">
+<label>View</label>
+<select id="viewModeSelect">
+<option value="grid">Grid</option>
+<option value="hero">By hero</option>
+<option value="archetypes">Archetypes</option>
+</select>
+</div>
+<div class="cols-field">
+<label style="font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-dim);">Columns</label>
+<div class="cols-toggle" id="colsToggle"></div>
+</div>
+<div class="field" id="qsfField">
+<label>&nbsp;</label>
+<button type="button" class="qsf-toggle-btn" id="qsfToggle">
+<span class="qsf-switch" id="qsfSwitch" aria-hidden="true"><span class="qsf-switch-thumb"></span></span>
+<span id="qsfToggleLabel">Stat filter</span>
+</button>
+</div>
+<div class="qsf-row" id="qsfRow">
+<span class="qsf-label">Main stat:</span>
+<div id="qsfMainChips" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+<span class="aq-stat-chip main-chip" id="qsfMainAdd">+ add</span>
+<span class="qsf-clear" id="qsfMainClear">Clear</span>
+<span class="qsf-sep"></span>
+<span class="qsf-label">Min. stats:</span>
+<div id="qsfChips" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+<span class="aq-stat-chip main-chip" id="qsfAdd">+ add</span>
+<span class="qsf-clear" id="qsfClear">Clear</span>
+</div>
+</div>
+<div class="qsf-menu" id="qsfMenu"></div>
+<div class="qsf-menu" id="qsfMainMenu"></div>
+<div class="slot-tabs" id="slotTabs" style="display:none;"></div>
+<div id="summaryBar" class="summary" style="display:none;">
+<div class="chip"><div class="num" id="sumTotal">0</div><div class="lbl">Evaluated</div></div>
+<div class="chip keep"><div class="num" id="sumKeep">0</div><div class="lbl">Keep</div></div>
+<div class="chip sell"><div class="num" id="sumSell">0</div><div class="lbl">Sell</div></div>
+<div class="chip reset"><div class="num" id="sumReset">0</div><div class="lbl">Reset</div></div>
+<div class="chip sold"><div class="num" id="sumSold">0</div><div class="lbl">Sold</div></div>
+<div class="chip"><div class="num" id="sumSkipped">0</div><div class="lbl">Discarded (filter)</div></div>
+</div>
+<div class="sold-toolbar" id="soldToolbar" style="display:none;">
+<button type="button" id="restoreAllBtn">↺ Restore all sold items</button>
+<button type="button" id="forgetSoldBtn">🗑 Forget sold history</button>
+</div>
+<div id="hint"></div>
+<div class="grid" id="grid"></div>
+<div class="overlay" id="overlay">
+<div class="modal">
+<button class="close" id="closeModal">✕</button>
+<div id="modalContent"></div>
+</div>
+</div>
+<div class="overlay" id="configOverlay">
+<div class="modal" style="max-width:980px;">
+<button class="close" id="closeConfigModal">✕</button>
+<div id="configModalContent"></div>
+</div>
+</div>
+<div class="overlay" id="aqListOverlay">
+<div class="modal">
+<button class="close" id="aqCloseList">✕</button>
+<div class="cfg2-header"><div class="dot"></div><h2>Configured archetypes</h2></div>
+<button type="button" class="aq-btn small" id="aqNewBtn">+ New archetype</button>
+<div class="aq-list" id="aqList"></div>
+</div>
+</div>
+<div class="overlay" id="aqEditorOverlay">
+<div class="modal">
+<button class="close" id="aqCloseEditor">✕</button>
+<div class="cfg2-header"><div class="dot"></div><h2 id="aqEditorTitle">New archetype</h2></div>
+<div class="aq-top-fields">
+<div class="field">
+<label>Name</label>
+<input type="text" id="aqName" placeholder="">
+</div>
+<div class="field">
+<label>Type</label>
+<select id="aqType">
+<option value="general">General (set-independent)</option>
+<option value="set">Variant tied to a Set</option>
+<option value="character">By character</option>
+</select>
+</div>
+<div class="field" id="aqSetField" style="display:none;">
+<label>Required set</label>
+<select id="aqSet"></select>
+</div>
+<div class="field" id="aqCharField" style="display:none;">
+<label>Character name</label>
+<input type="text" id="aqChar" placeholder="e.g. Juanito">
+</div>
+<div class="field" style="max-width:220px;">
+<label>Minimum stats</label>
+<input type="number" id="aqMinSubstats" min="1" placeholder="">
+</div>
+</div>
+<div class="aq-layout-toggle">
+<span>View:</span>
+<button type="button" class="aq-layout-btn" id="aqLayoutClassicBtn">Classic</button>
+<button type="button" class="aq-layout-btn" id="aqLayoutTabsBtn">Tabs</button>
+</div>
+<div id="aqSlotEditors"></div>
+<div id="aqSlotEditorsTabs"></div>
+<div class="aq-modal-actions">
+<button class="aq-btn secondary" id="aqDeleteBtn" style="display:none;">Delete</button>
+<button class="aq-btn secondary" id="aqCancelBtn">Cancel</button>
+<button class="aq-btn" id="aqSaveBtn">Save</button>
+</div>
+</div>
+</div>
+<script>
+const SLOT_ICON = {weapon:'⚔️', armor:'🛡️', helm:'🪖', ring:'💍', neck:'📿', boot:'👢'};
+const SLOT_LABEL = {weapon:'Weapon', armor:'Armor', helm:'Helmet', ring:'Ring', neck:'Necklace', boot:'Boots'};
+const GEAR_LABEL_TO_SLOT = Object.fromEntries(Object.entries(SLOT_LABEL).map(([k,v])=>[v,k]));
+function resolveSlot(raw){
+if(!raw) return '';
+const t = (raw.type && raw.type!=='undefined') ? raw.type : '';
+const g = (raw.gear && raw.gear!=='undefined') ? GEAR_LABEL_TO_SLOT[raw.gear] : '';
+return t || g || '';
+}
+const SET_LABEL = {
+SpeedSet:'Speed', DestructionSet:'Destruction', ImmunitySet:'Immunity',
+PenetrationSet:'Penetration', HitSet:'Hit', TorrentSet:'Torrent',
+CriticalSet:'Critical', CounterSet:'Counter', HealthSet:'Health',
+ResistSet:'Resist', LifestealSet:'Lifesteal', PursuitSet:'Pursuit',
+ProtectionSet:'Protection', AttackSet:'Attack', InjurySet:'Injury',
+WarfareSet:'Warfare', WeakeningSet:'Weakening', DefenseSet:'Defense',
+FervorSet:'Fervor', RageSet:'Rage', UnitySet:'Unity', RevengeSet:'Revenge',
+RiposteSet:'Riposte'
+};
+function setLabel(s){ return SET_LABEL[s] || (s||'').replace('Set',''); }
+const RAW_TO_TYPE = {
+att_rate:'AttackPercent', def_rate:'DefensePercent', max_hp_rate:'HealthPercent',
+att:'Attack', def:'Defense', max_hp:'Health',
+cri:'CriticalHitChancePercent', cri_dmg:'CriticalHitDamagePercent',
+res:'EffectResistancePercent', acc:'EffectivenessPercent', speed:'Speed'
+};
+const TYPE_TO_RAW = Object.fromEntries(Object.entries(RAW_TO_TYPE).map(([k,v])=>[v,k]));
+const TYPE_LABEL = {
+AttackPercent:'Attack %', Attack:'Attack', DefensePercent:'Defense %', Defense:'Defense',
+HealthPercent:'Health %', Health:'Health', Speed:'Speed',
+CriticalHitChancePercent:'Crit. Chance', CriticalHitDamagePercent:'Crit. Damage',
+EffectResistancePercent:'Effect Resistance', EffectivenessPercent:'Effectiveness'
+};
+const TYPE_TO_CATEGORY = {
+AttackPercent:'PCT', DefensePercent:'PCT', HealthPercent:'PCT',
+EffectResistancePercent:'PCT', EffectivenessPercent:'PCT',
+CriticalHitDamagePercent:'CDMG', CriticalHitChancePercent:'CCH', Speed:'SPD',
+Attack:'FATK', Defense:'FDEF', Health:'FHP'
+};
+const ROLL_RANGES = {
+'85heroic': {PCT:[4,8], CDMG:[4,7], CCH:[3,5], SPD:[1,4], FATK:[31,44], FDEF:[26,33], FHP:[149,192]},
+'85epic':   {PCT:[4,8], CDMG:[4,7], CCH:[3,5], SPD:[2,5], FATK:[33,46], FDEF:[28,35], FHP:[157,202]},
+'88epic':   {PCT:[5,9], CDMG:[4,8], CCH:[3,6], SPD:[3,5], FATK:[37,53], FDEF:[32,40], FHP:[178,229]}
+};
+const GEM_MAX_85 = {
+PCT:  [8, 11, 14, 17, 18, 19],
+CDMG: [7, 9, 12, 15, 16, 16],
+CCH:  [4, 6, 8, 10, 11, 12],
+SPD:  [4, 5, 6, 8, 9, 9],
+FATK: [47, 77, 101, 109, 129, 151],
+FDEF: [35, 61, 76, 80, 97, 111],
+FHP:  [203, 336, 422, 461, 578, 659]
+};
+const GEM_MAX_90 = {
+PCT:  [9, 14, 18, 22, 25, 25],
+CDMG: [8, 11, 15, 19, 22, 22],
+CCH:  [5, 8, 11, 14, 16, 16],
+SPD:  [4, 6, 8, 11, 13, 13],
+FATK: [58, 99, 134, 153, 184, 184],
+FDEF: [44, 79, 103, 116, 142, 142],
+FHP:  [259, 448, 590, 685, 858, 858]
+};
+const GEM_MAX_BY_TIER = {
+'85heroic': GEM_MAX_85, '85epic': GEM_MAX_85, '88epic': GEM_MAX_85,
+'90heroic': GEM_MAX_90, '90epic': GEM_MAX_90
+};
+const PCT_TYPES = new Set(['AttackPercent','DefensePercent','HealthPercent','EffectResistancePercent','EffectivenessPercent','CriticalHitDamagePercent','CriticalHitChancePercent']);
+const REFORGE_BONUS_SPD = [0, 1, 2, 3, 4, 4];
+function tierKey(item){
+if(item.level===88) return '88epic';
+return item.rank==='Heroic' ? '85heroic' : '85epic';
+}
+function gemTierKey(item){
+if(item.level===88) return '88epic';
+const base = item.level===90 ? '90' : '85';
+return base + (item.rank==='Heroic' ? 'heroic' : 'epic');
+}
+function isOtherworldRaw(raw){
+return !!(raw && typeof raw.code==='string' && raw.code.includes('_chaos'));
+}
+function isUnidentifiedRaw(raw){
+return !!(raw && raw.level===0);
+}
+function detectGaps(raw){
+const gaps = [];
+if(isUnidentifiedRaw(raw)) gaps.push('level');
+if(!resolveSlot(raw)) gaps.push('slot');
+if(raw && raw.main && raw.main.value===0) gaps.push('mainValue');
+return gaps;
+}
+function rankMatches(rankVal, raw){
+if(rankVal==='all') return true;
+if(rankVal==='Otherworldly') return isOtherworldRaw(raw);
+return raw.rank===rankVal;
+}
+function parseItem(item){
+if(!(item.rank==='Heroic' || item.rank==='Epic')) return null;
+if(![85,88,90].includes(item.level)) return null;
+const enhance = item.enhance;
+const tier = tierKey(item);
+const ranges = ROLL_RANGES[tier];
+const op = item.op.slice(1);
+const cKeys = new Set(op.filter(e=>e.length>2 && e[2]==='c').map(e=>e[0]));
+const hasConversion = cKeys.size>0;
+const filtered = op.filter(e => !(e.length>2 && e[2]==='u') && !cKeys.has(e[0]));
+const seen = {};
+const mejoraByKey = {};
+filtered.forEach(e=>{
+const k = e[0];
+if(!(k in seen)){ seen[k]=true; mejoraByKey[k]=[]; }
+else { mejoraByKey[k].push(e[1]); }
+});
+let tramoLabels = null;
+if(!hasConversion){
+const initialCount = item.rank==='Heroic' ? 3 : 4;
+const tramoEvents = filtered.slice(initialCount);
+const names = ['+3','+6','+9','+12','+15'];
+tramoLabels = tramoEvents.map((e,i)=>({key:e[0], val:e[1], tramo:names[i]}));
+}
+const substResults = [];
+const allQualities = [];
+let speedTotal = 0;
+let spdMejoraCount = null;
+item.substats.forEach(s=>{
+const cat = TYPE_TO_CATEGORY[s.type];
+const mult = PCT_TYPES.has(s.type) ? 100 : 1;
+if(s.type==='Speed'){
+speedTotal += s.value;
+spdMejoraCount = Math.max(0, s.rolls-1);
+}
+const range = ranges[cat];
+if(s.modified){
+const mejoraCount = Math.max(0, s.rolls-1);
+const gemTable = GEM_MAX_BY_TIER[gemTierKey(item)];
+let q = 100, gemMax = null, naturalMax = null, naturalMin = null, convReforgeBonus = 0;
+if(gemTable && gemTable[cat]){
+gemMax = gemTable[cat][Math.min(mejoraCount, gemTable[cat].length-1)];
+if(mejoraCount>0){
+naturalMin = range[0] * (mejoraCount+1);
+naturalMax = range[1] * (mejoraCount+1);
+q = Math.max(0, Math.min(100, (gemMax / naturalMax) * 100));
+}
+if(item.level===90 && mejoraCount>0){
+const idx = Math.min(mejoraCount, gemTable[cat].length-1);
+const g90 = GEM_MAX_90[cat] ? GEM_MAX_90[cat][idx] : null;
+const g85 = GEM_MAX_85[cat] ? GEM_MAX_85[cat][idx] : null;
+if(g90!==null && g85!==null) convReforgeBonus = g90 - g85;
+}
+}
+const rolls = Array.from({length:mejoraCount}, ()=>({quality:q, modified:true}));
+rolls.forEach(r=>allQualities.push(q));
+substResults.push({type:s.type, value:s.value, rolls:s.rolls, modified:true, avg:mejoraCount>0?q:null, rollDetails:rolls, mejoraCount, gemMax, naturalMax, naturalMin, convReforgeBonus, hasGemTable: !!(gemTable && gemTable[cat]), gemTableLen: (gemTable && gemTable[cat]) ? gemTable[cat].length : 0, range});
+return;
+}
+const rawKey = TYPE_TO_RAW[s.type];
+const mejoraVals = (mejoraByKey[rawKey]||[]).slice();
+const rollDetails = mejoraVals.map(v=>{
+const disp = Math.round(v*mult*100)/100;
+let q = (disp - range[0]) / (range[1]-range[0]) * 100;
+q = Math.max(0, Math.min(100, q));
+return {value:disp, quality:q};
+});
+rollDetails.forEach(r=>allQualities.push(r.quality));
+const avg = rollDetails.length ? rollDetails.reduce((a,b)=>a+b.quality,0)/rollDetails.length : null;
+const baseRaw = filtered.find(e=>e[0]===rawKey);
+const baseVal = baseRaw ? Math.round(baseRaw[1]*mult*100)/100 : null;
+let reforgeBonus = 0;
+if(item.level===90 && baseVal!==null){
+const rollSum = rollDetails.reduce((a,r)=>a+r.value,0);
+reforgeBonus = Math.round((s.value - baseVal - rollSum)*100)/100;
+if(Math.abs(reforgeBonus) < 0.01) reforgeBonus = 0;
+}
+let maxPossible = null;
+if(baseVal!==null){
+maxPossible = Math.round((baseVal + rollDetails.length*range[1] + reforgeBonus)*100)/100;
+}
+let absoluteMax = null;
+if(baseVal!==null && rollDetails.length>0){
+absoluteMax = Math.round((range[1]*(rollDetails.length+1) + reforgeBonus)*100)/100;
+}
+substResults.push({type:s.type, value:s.value, rolls:s.rolls, modified:false, avg, rollDetails, baseVal, rawKey, reforgeBonus, maxPossible, absoluteMax, range});
+});
+const overallAvg = allQualities.length ? allQualities.reduce((a,b)=>a+b,0)/allQualities.length : 0;
+const equippedId = item.ingameEquippedId;
+const heroName = (equippedId && equippedId!=='undefined') ? (heroNameById[equippedId]||heroNameById[Number(equippedId)]||null) : null;
+let speedCheckValue = speedTotal;
+if(item.level===85 && spdMejoraCount!==null){
+const idx = Math.min(spdMejoraCount, REFORGE_BONUS_SPD.length-1);
+speedCheckValue = speedTotal + REFORGE_BONUS_SPD[idx];
+}
+return {
+raw:item,
+key: itemKey(item),
+heroName,
+tier, slot:resolveSlot(item), rank:item.rank, level:item.level, set:item.set, enhance,
+mainType:item.main.type, mainValue:item.main.value,
+substats:substResults,
+overallAvg,
+speedTotal,
+speedCheckValue,
+hasConversion,
+tramoLabels
+};
+}
+let parsedItems = [];
+let discardedItems = [];
+let skippedCount = 0;
+let heroNameById = {};
+let activeSlot = 'all';
+let lastModalArgs = null;
+let quickStatFilter = [];
+let quickMainStatFilter = [];
+const STORAGE_KEYS = {
+SOLD: 'gearSold_v1',
+HELD: 'gearHeld_v1',
+GRID_COLS: 'gearGridCols_v1',
+CONFIG: 'gearCfg_v3',
+ARCHETYPES: 'gearArch_v1',
+ARCH_LAYOUT_MODE: 'gearArch_layout_mode',
+PALETTE_SETTINGS: 'gearEvalPaletteSettings',
+PALETTE_CURRENT: 'gearEvalPalette_v121',
+PALETTE_FAVS: 'gearEvalFavs',
+MANUAL_OVERRIDES: 'gearManualOverrides_v1',
+};
+const decisionCache = new Map();
+function invalidateDecisionCache(){ decisionCache.clear(); }
+function decisionForCached(p, speedThreshold){
+const cacheKey = p.key + '|' + speedThreshold;
+let d = decisionCache.get(cacheKey);
+if(!d){
+d = decisionFor(p, speedThreshold);
+decisionCache.set(cacheKey, d);
+}
+return d;
+}
+const SOLD_KEY = STORAGE_KEYS.SOLD;
+let soldIds = new Set();
+try{ soldIds = new Set(JSON.parse(localStorage.getItem(SOLD_KEY) || '[]')); }catch(e){ soldIds = new Set(); }
+function itemKey(item){
+if(item && item.id!==undefined && item.id!==null && item.id!=='') return 'id:'+item.id;
+try{ return 'raw:'+JSON.stringify(item); }catch(e){ return 'raw:'+Math.random(); }
+}
+function saveSoldIds(){
+try{ localStorage.setItem(SOLD_KEY, JSON.stringify(Array.from(soldIds))); }catch(e){}
+}
+function markSold(key){
+soldIds.add(key);
+saveSoldIds();
+render();
+}
+function unmarkSold(key){
+soldIds.delete(key);
+saveSoldIds();
+render();
+}
+function restoreAllSold(){
+if(!confirm('Restore all pieces marked as sold? They will reappear in the other views.')) return;
+soldIds.clear();
+saveSoldIds();
+render();
+}
+function forgetSoldHistory(){
+if(!confirm('Forget sold history? This just clears the stored "sold" record — sold items are already gone in-game and will NOT reappear in evaluation.')) return;
+soldIds.clear();
+saveSoldIds();
+render();
+}
+const HELD_KEY = STORAGE_KEYS.HELD;
+let heldIds = new Set();
+try{ heldIds = new Set(JSON.parse(localStorage.getItem(HELD_KEY) || '[]')); }catch(e){ heldIds = new Set(); }
+function saveHeldIds(){
+try{ localStorage.setItem(HELD_KEY, JSON.stringify(Array.from(heldIds))); }catch(e){}
+}
+function markHeld(key){
+heldIds.add(key);
+saveHeldIds();
+render();
+}
+function unmarkHeld(key){
+heldIds.delete(key);
+saveHeldIds();
+render();
+}
+const MANUAL_OVERRIDES_KEY = STORAGE_KEYS.MANUAL_OVERRIDES;
+let manualOverrides = {};
+try{ manualOverrides = JSON.parse(localStorage.getItem(MANUAL_OVERRIDES_KEY) || '{}'); }catch(e){ manualOverrides = {}; }
+function saveManualOverrides(){
+try{ localStorage.setItem(MANUAL_OVERRIDES_KEY, JSON.stringify(manualOverrides)); }catch(e){}
+}
+function applyManualOverrides(item){
+const patch = manualOverrides[item.id];
+if(!patch) return;
+if(patch.level!==undefined && isUnidentifiedRaw(item)) item.level = patch.level;
+if(patch.type!==undefined && !resolveSlot(item)) item.type = patch.type;
+if(patch.mainValue!==undefined && item.main && item.main.value===0){
+item.main = Object.assign({}, item.main, {value:patch.mainValue});
+}
+}
+const SLOT_ORDER = ['weapon','helm','armor','neck','ring','boot'];
+let lastTabsSignature = null;
+function renderSlotTabs(force){
+const bar = document.getElementById('slotTabs');
+const currentViewMode = document.getElementById('viewModeSelect').value;
+const signature = currentViewMode + '|' + parsedItems.length + '|' + discardedItems.length;
+if(!force && signature===lastTabsSignature){
+bar.querySelectorAll('.slot-tab').forEach(el=>{
+el.classList.toggle('active', el.getAttribute('data-slot')===activeSlot);
+});
+return;
+}
+lastTabsSignature = signature;
+const pool = currentViewMode==='archetypes'
+? parsedItems.concat(discardedItems.map(parseItemBasic))
+: parsedItems.filter(p=>p.enhance===15).concat(discardedItems.filter(isUnidentifiedRaw).map(it=>({slot:resolveSlot(it)})));
+const counts = {};
+SLOT_ORDER.forEach(s=>counts[s]=0);
+pool.forEach(p=>{ counts[p.slot] = (counts[p.slot]||0)+1; });
+const tabs = [{key:'all', icon:'▦', label:'All', count:pool.length}]
+.concat(SLOT_ORDER.map(s=>({key:s, icon:SLOT_ICON[s], label:SLOT_LABEL[s], count:counts[s]||0})));
+bar.innerHTML = tabs.map(t=>`
+<div class="slot-tab ${activeSlot===t.key?'active':''}" data-slot="${t.key}">
+<div class="stab-icon">${t.icon}</div>
+<div class="stab-label">${t.label}</div>
+<div class="stab-count">${t.count}</div>
+</div>
+`).join('');
+bar.querySelectorAll('.slot-tab').forEach(el=>{
+el.addEventListener('click', ()=>{
+activeSlot = el.getAttribute('data-slot');
+renderSlotTabs();
+render();
+});
+});
+}
+const CATS = ['PCT','CDMG','CCH','SPD','FATK','FDEF','FHP'];
+const FLAT_CATS = ['FATK','FDEF','FHP'];
+const CAT_LABEL = {
+PCT:'% (Attack / Defense / Health / Resist. / Effectiveness)',
+CDMG:'Crit. Damage %', CCH:'Crit. Chance %', SPD:'Speed',
+FATK:'Flat Attack', FDEF:'Flat Defense', FHP:'Flat Health'
+};
+const DEFAULT_MIN = {PCT:7, CDMG:6, CCH:4, SPD:4, FATK:42, FDEF:32, FHP:185};
+const TIERS = ['85heroic','85epic','88epic'];
+const TIER_LABEL = {
+'85heroic':'85-90 Heroic (same rolls; 90 only adds the reforge bonus separately) — max 4 rolls',
+'85epic':'85-90 Epic (same rolls; 90 only adds the reforge bonus separately) — max 5 rolls',
+'88epic':'88 Epic (never reforges, does not reach 90) — max 5 rolls'
+};
+const TIER_SHORT_LABEL = {
+'85heroic':'85-90 Heroic',
+'85epic':'85-90 Epic',
+'88epic':'88 Epic'
+};
+const TIER_MAX_ROLLS = {'85heroic':4, '85epic':5, '88epic':5};
+const TIER_BIRTH_COUNT = {'85heroic':3, '85epic':4, '88epic':4};
+const STATS_AT_15 = 4;
+function defaultSumTable(minAceptable){
+const t = {};
+CATS.forEach(c=>{ t[c] = [1,2,3,4,5,6].map(n=>Math.round(minAceptable[c]*n*100)/100); });
+return t;
+}
+function padSumTable(sumTable, minAceptable){
+CATS.forEach(c=>{
+const arr = (sumTable[c]||[]).slice();
+for(let i=0;i<6;i++){
+if(arr[i]===undefined) arr[i] = Math.round(minAceptable[c]*(i+1)*100)/100;
+}
+sumTable[c] = arr;
+});
+return sumTable;
+}
+function defaultConvAccepted(){
+const t = {};
+CATS.forEach(c=>{ t[c] = {1:false, 2:false, 3:false, 4:false, 5:false}; });
+return t;
+}
+function defaultTierConfig(tier){
+return {
+activeCriterion: 1,
+minAceptable: {...DEFAULT_MIN},
+sumTable: defaultSumTable(DEFAULT_MIN),
+minPoints: 2,
+convAccepted: defaultConvAccepted(),
+baseCounts: {1:false, 2:false},
+resetMinAceptable: {...DEFAULT_MIN},
+resetMinPoints: TIER_BIRTH_COUNT[tier] || 3,
+resetEnabled: true,
+flatExcluded: {FATK:false, FDEF:false, FHP:false},
+resetFlatExcluded: {FATK:false, FDEF:false, FHP:false}
+};
+}
+function defaultConfig(){
+const tiers = {};
+TIERS.forEach(t=>{ tiers[t] = defaultTierConfig(t); });
+return { activeTier: '85heroic', tiers };
+}
+function loadConfig(){
+try{
+const raw = localStorage.getItem(STORAGE_KEYS.CONFIG);
+if(!raw) return defaultConfig();
+const parsed = JSON.parse(raw);
+const d = defaultConfig();
+const tiers = {};
+TIERS.forEach(t=>{
+const dt = d.tiers[t];
+const pt = (parsed.tiers && parsed.tiers[t]) || {};
+const convAccepted = {};
+CATS.forEach(c=>{
+const savedCat = (pt.convAccepted && pt.convAccepted[c]) || {};
+convAccepted[c] = {...dt.convAccepted[c], ...savedCat};
+});
+tiers[t] = {
+activeCriterion: (pt.activeCriterion===2) ? 2 : 1,
+minAceptable: {...dt.minAceptable, ...(pt.minAceptable||{})},
+sumTable: padSumTable({...dt.sumTable, ...(pt.sumTable||{})}, dt.minAceptable),
+minPoints: pt.minPoints!==undefined ? pt.minPoints : dt.minPoints,
+convAccepted,
+baseCounts: {
+1: !!(pt.baseCounts && pt.baseCounts[1]),
+2: !!(pt.baseCounts && pt.baseCounts[2])
+},
+resetMinAceptable: {...dt.resetMinAceptable, ...(pt.resetMinAceptable||{})},
+resetMinPoints: pt.resetMinPoints!==undefined ? pt.resetMinPoints : dt.resetMinPoints,
+resetEnabled: pt.resetEnabled!==undefined ? !!pt.resetEnabled : dt.resetEnabled,
+flatExcluded: {...dt.flatExcluded, ...(pt.flatExcluded||{})},
+resetFlatExcluded: {...dt.resetFlatExcluded, ...(pt.resetFlatExcluded||{})}
+};
+});
+return { activeTier: TIERS.includes(parsed.activeTier) ? parsed.activeTier : '85heroic', tiers };
+}catch(e){ return defaultConfig(); }
+}
+let CONFIG = loadConfig();
+function thresholdFor(tierCfg, cat, n){
+if(tierCfg.activeCriterion===1){
+const min = tierCfg.minAceptable[cat];
+return (min===undefined) ? undefined : Math.round(min*n*100)/100;
+}
+return (tierCfg.sumTable[cat]||[])[n-1];
+}
+function computePieceCriteria(p){
+const tierCfg = CONFIG.tiers[p.tier] || CONFIG.tiers['85heroic'];
+const useBase = !!(tierCfg.baseCounts && tierCfg.baseCounts[tierCfg.activeCriterion]);
+const hits = [];
+p.substats.forEach(s=>{
+const cat = TYPE_TO_CATEGORY[s.type];
+const hasBonusRolls = s.rollDetails && s.rollDetails.length;
+if(s.modified){
+const n = s.mejoraCount || 0;
+if(n<=0){
+if(useBase){
+const perRollMin = thresholdFor(tierCfg, cat, 1);
+const gemCeil = (s.hasGemTable && s.gemMax!==null && s.gemMax!==undefined) ? s.gemMax : null;
+const met = (perRollMin!==undefined && gemCeil!==null) ? gemCeil>=perRollMin : false;
+hits.push({type:s.type, n:1, sum:gemCeil, sumThresh:perRollMin, met, earned: met?1:0, conv:true, baseAuto:true});
+}
+return;
+}
+const accepted = !!(tierCfg.convAccepted && tierCfg.convAccepted[cat] && tierCfg.convAccepted[cat][n]);
+const earned = accepted ? n : 0;
+hits.push({type:s.type, n, sum:null, sumThresh:null, met:accepted, earned, conv:true});
+return;
+}
+const hasBaseVal = s.baseVal!==null && s.baseVal!==undefined;
+const includeBase = useBase && hasBaseVal;
+if(!hasBonusRolls && !includeBase) return;
+const bonusN = hasBonusRolls ? s.rollDetails.length : 0;
+const bonusSum = hasBonusRolls ? Math.round(s.rollDetails.reduce((a,r)=>a+r.value,0)*100)/100 : 0;
+const n = includeBase ? bonusN+1 : bonusN;
+const sum = includeBase ? Math.round((bonusSum + s.baseVal)*100)/100 : bonusSum;
+const sumThresh = thresholdFor(tierCfg, cat, n);
+let earned = 0;
+if(sumThresh!==undefined && sumThresh>0){
+if(sum >= sumThresh){
+earned = n;
+}else{
+const perRollMin = thresholdFor(tierCfg, cat, 1);
+if(perRollMin!==undefined){
+earned = s.rollDetails ? s.rollDetails.reduce((acc,r)=> acc + (r.value>=perRollMin ? 1 : 0), 0) : 0;
+if(includeBase && s.baseVal>=perRollMin) earned += 1;
+}
+}
+}
+const met = sumThresh!==undefined && sum>=sumThresh;
+let excluded = false;
+if(FLAT_CATS.includes(cat) && tierCfg.flatExcluded && tierCfg.flatExcluded[cat]){
+excluded = true;
+earned = 0;
+}
+hits.push({type:s.type, n, sum, sumThresh, met, earned, excluded, includesBase:includeBase});
+});
+return {hits, tierCfg};
+}
+function computeResetEligible(p){
+if(p.hasConversion) return {eligible:false, points:0, need:0, hits:[]};
+const tierCfg = CONFIG.tiers[p.tier] || CONFIG.tiers['85heroic'];
+if(tierCfg.resetEnabled===false) return {eligible:false, points:0, need:0, hits:[], disabled:true};
+const need = tierCfg.resetMinPoints;
+const hits = [];
+let points = 0;
+p.substats.forEach(s=>{
+if(s.modified) return;
+if(s.baseVal===null || s.baseVal===undefined) return;
+const cat = TYPE_TO_CATEGORY[s.type];
+const min = tierCfg.resetMinAceptable[cat];
+const rawMet = (min!==undefined) && (s.baseVal>=min);
+const excluded = FLAT_CATS.includes(cat) && tierCfg.resetFlatExcluded && tierCfg.resetFlatExcluded[cat];
+const met = rawMet && !excluded;
+if(met) points++;
+hits.push({type:s.type, baseVal:s.baseVal, min, met, excluded});
+});
+return {eligible: points>=need, points, need, hits};
+}
+function decisionFor(p, speedThreshold){
+if(speedThreshold>0 && p.speedCheckValue>=speedThreshold){
+return {label:'KEEP', cls:'speedsave', reason:'speed', detail:`Automatically kept: total Speed ${p.speedCheckValue} >= threshold ${speedThreshold}, regardless of the other criteria.`};
+}
+const {hits, tierCfg} = computePieceCriteria(p);
+const points = hits.reduce((a,h)=>a+h.earned,0);
+const keep = points >= tierCfg.minPoints;
+const critLabel = tierCfg.activeCriterion===1 ? 'Method 1 (strict formula)' : 'Method 2 (manual table)';
+const hitsTxt = hits.length ? hits.map(h=>{
+const suf = PCT_TYPES.has(h.type)?'%':'';
+if(h.conv){
+if(h.baseAuto){
+const suf2 = PCT_TYPES.has(h.type)?'%':'';
+return `${TYPE_LABEL[h.type]||h.type} ⇄ converted, no bonus: gem ceiling ${h.sum!==null?h.sum+suf2:'?'} (minimum ${h.sumThresh!==undefined?h.sumThresh+suf2:'-'}) → +${h.earned}/1 pts`;
+}
+return `${TYPE_LABEL[h.type]||h.type} ⇄ converted (${h.n} bonus): ${h.met?'checkbox on':'checkbox off'} → +${h.earned}/${h.n} pts`;
+}
+return `${TYPE_LABEL[h.type]||h.type} (${h.n} roll${h.n>1?'s':''}${h.includesBase?', incl. base':''}): sum ${h.sum}${suf} (minimum ${h.sumThresh!==undefined?h.sumThresh+suf:'-'}) → +${h.earned}/${h.n} pts${h.excluded?' [manually excluded, does not count as points]':''}`;
+}).join(' &middot; ') : 'no substats with rolls';
+const detail = `${TIER_LABEL[p.tier]||p.tier} — ${critLabel} — Points: ${points}/${tierCfg.minPoints} required (${keep?'MEETS':'does not meet'}). ${hitsTxt}`;
+if(keep) return {label:'KEEP', cls:'keep', reason:'criteria', detail};
+const reset = computeResetEligible(p);
+if(reset.eligible){
+const resetHitsTxt = reset.hits.length ? reset.hits.map(h=>{
+const suf = PCT_TYPES.has(h.type)?'%':'';
+return `${TYPE_LABEL[h.type]||h.type}: base ${h.baseVal}${suf} (minimum ${h.min!==undefined?h.min+suf:'-'}) → ${h.met?'meets':'does not meet'}${h.excluded?' [manually excluded]':''}`;
+}).join(' &middot; ') : 'no substats';
+const resetDetail = `${detail} — Reset criterion: ${reset.points}/${reset.need} base substats meet the minimum. ${resetHitsTxt}`;
+return {label:'RESET', cls:'reset', reason:'reset', detail:resetDetail};
+}
+return {label:'SELL', cls:'sell', reason:'criteria', detail};
+}
+function qualityClass(q){
+if(q>=70) return 'g';
+if(q>=50) return 'o';
+return 'r';
+}
+function discardReason(item){
+if(!(item.rank==='Heroic' || item.rank==='Epic')) return `Rarity not evaluated (${item.rank||'?'})`;
+if(isUnidentifiedRaw(item)) return 'Not identified yet by the export tool';
+if(![85,88,90].includes(item.level)) return `Level ${item.level} not supported`;
+return 'Not evaluated';
+}
+function discardedMainStatHtml(raw){
+if(!raw.main) return '';
+const suf = PCT_TYPES.has(raw.main.type) ? '%' : '';
+return `<div class="main-stat"><span>${TYPE_LABEL[raw.main.type]||raw.main.type}</span><span>${raw.main.value}${suf}</span></div>`;
+}
+function discardedSubstatsHtml(raw){
+if(!Array.isArray(raw.op) || raw.op.length<2) return '';
+const totals = {};
+const order = [];
+raw.op.slice(1).forEach(e=>{
+if(e.length>2 && e[2]==='u') return;
+const k = e[0];
+if(!(k in totals)){ totals[k]=0; order.push(k); }
+totals[k]+=e[1];
+});
+if(!order.length) return '';
+return `<div class="substats">${order.map(k=>{
+const type = RAW_TO_TYPE[k];
+const label = TYPE_LABEL[type]||k;
+const mult = type && PCT_TYPES.has(type) ? 100 : 1;
+const val = Math.round(totals[k]*mult*100)/100;
+const suf = type && PCT_TYPES.has(type) ? '%' : '';
+return `<div class="substat-row"><span>${label}</span><span class="sv">${val}${suf}</span></div>`;
+}).join('')}</div>`;
+}
+function buildCard(entry, mode){
+const { key, raw, p, d } = entry;
+const isSold = mode==='sold';
+const isDiscarded = mode==='discarded' || !p;
+const rank = raw.rank || (p&&p.rank) || '';
+const slot = resolveSlot(raw) || (p&&p.slot) || '';
+const level = raw.level!==undefined ? raw.level : (p&&p.level);
+const set = raw.set || (p&&p.set) || '';
+const otherworld = isOtherworldRaw(raw);
+const gaps = isDiscarded ? detectGaps(raw) : [];
+const card = document.createElement('div');
+card.className = `card rank-${rank}${otherworld?' otherworld':''}${isSold?' is-sold':''}${isDiscarded?' is-discarded':''}`;
+let controlHtml;
+if(isSold){
+controlHtml = `<button type="button" class="restore-btn" data-action="restore" data-key="${encodeURIComponent(key)}">RESTORE</button>`;
+}else if(isDiscarded){
+controlHtml = `<button type="button" class="decision sell clickable" data-action="sell" data-key="${encodeURIComponent(key)}" title="Mark as already sold">SELL</button>`;
+}else if(d.label==='SELL' && heldIds.has(key)){
+controlHtml = `<button type="button" class="decision hold clickable" data-action="unhold" data-key="${encodeURIComponent(key)}" title="Keeping this despite the SELL verdict. Click to undo.">HOLD</button>`;
+}else if(d.label==='SELL'){
+controlHtml = `<button type="button" class="decision sell clickable" data-action="sell" data-key="${encodeURIComponent(key)}" title="Mark as already sold">SELL</button>`;
+}else if(d.label==='RESET'){
+controlHtml = `<button type="button" class="decision reset" title="Gear reset: future feature, does nothing yet">RESET</button>`;
+}else{
+controlHtml = `<span class="decision ${d.cls}">${d.label}</span>`;
+}
+const heroName = (p && p.heroName) || '';
+const bodyHtml = isDiscarded
+? `${discardedMainStatHtml(raw)}${discardedSubstatsHtml(raw)}<div class="discard-reason">${discardReason(raw)}${gaps.length?' — tap card to fill in':''}</div>`
+: `
+<div class="main-stat"><span>${TYPE_LABEL[p.mainType]||p.mainType}</span><span>${p.mainValue}${PCT_TYPES.has(p.mainType)?'%':''}</span></div>
+<div class="substats">
+${p.substats.map(s=>{
+const mejoraCount = (s.rolls||1)-1;
+const countTxt = mejoraCount>0 ? ` <span class="roll-count">(${mejoraCount})</span>` : '';
+return `<div class="substat-row ${s.modified?'mod':''}"><span>${TYPE_LABEL[s.type]||s.type}${countTxt}</span><span class="sv">${s.value}${PCT_TYPES.has(s.type)?'%':''}</span></div>`;
+}).join('')}
+</div>
+`;
+card.innerHTML = `
+<div class="card-top">
+<div class="icon-frame">
+<div class="icon-wrap${otherworld?' otherworld':''}">${SLOT_ICON[slot]||'❔'}</div>
+<span class="lvl-badge">${isUnidentifiedRaw(raw)?'?':level}</span>
+</div>
+<div class="title-block">
+<div class="rank-line">${otherworld?'<span class="otherworld-tag">Otherworldly</span>':''}${rank}</div>
+<div class="slot-line">${SLOT_LABEL[slot]||slot}</div>
+<div class="gear-line">${setLabel(set)}</div>
+</div>
+</div>
+${bodyHtml}
+<div class="footer-row" style="justify-content:space-between;align-items:center;">
+<span class="hero-name">${heroName}</span>
+<div class="footer-actions">${controlHtml}</div>
+</div>
+`;
+if(!isDiscarded && p && d){
+card.addEventListener('click', ()=>openModal(p,d,Number(document.getElementById('speedThreshold').value)||0));
+}else if(isDiscarded && gaps.length){
+card.style.cursor = 'pointer';
+card.addEventListener('click', ()=>openEditModal(raw));
+}else{
+card.style.cursor = 'default';
+}
+const actionBtn = card.querySelector('[data-action]');
+if(actionBtn){
+actionBtn.addEventListener('click', (ev)=>{
+ev.stopPropagation();
+const k = decodeURIComponent(actionBtn.dataset.key);
+if(actionBtn.dataset.action==='sell') markSold(k);
+else if(actionBtn.dataset.action==='unhold') unmarkHeld(k);
+else unmarkSold(k);
+});
+}
+return card;
+}
+function renderHeroView(speedThreshold){
+const grid = document.getElementById('grid');
+grid.innerHTML = '';
+document.getElementById('slotTabs').style.display='none';
+document.getElementById('soldToolbar').style.display='none';
+const byHero = {};
+parsedItems.forEach(p=>{
+if(!p.heroName) return;
+if(p.enhance!==15) return;
+if(soldIds.has(p.key)) return;
+if(!byHero[p.heroName]) byHero[p.heroName] = {};
+byHero[p.heroName][p.slot] = {p, d: decisionForCached(p, speedThreshold)};
+});
+const heroNames = Object.keys(byHero).sort((a,b)=>a.localeCompare(b, 'en'));
+grid.classList.add('hero-view');
+if(heroNames.length===0){
+grid.innerHTML = `<div class="empty-hero-view">No pieces equipped to any hero in this file.</div>`;
+}
+let totalKeep=0, totalSell=0, totalReset=0;
+heroNames.forEach(name=>{
+const slots = byHero[name];
+let missing=0, sell=0, reset=0, keep=0;
+const rows = SLOT_ORDER.map(slotKey=>{
+const entry = slots[slotKey];
+if(!entry){
+missing++;
+return `<div class="hero-slot-row empty">
+<span class="hero-slot-icon">${SLOT_ICON[slotKey]}</span>
+<span class="hero-slot-label">${SLOT_LABEL[slotKey]}</span>
+<span class="hero-slot-status muted">Not equipped</span>
+</div>`;
+}
+const {d} = entry;
+if(d.label==='SELL') sell++;
+else if(d.label==='RESET') reset++;
+else keep++;
+const statusHtml = (d.label==='SELL' && heldIds.has(entry.p.key))
+? `<button type="button" class="hero-slot-status decision hold hold-action" data-action="unhold" data-key="${encodeURIComponent(entry.p.key)}" title="Keeping this despite the SELL verdict. Click to undo.">HOLD</button>`
+: d.label==='SELL'
+? `<button type="button" class="hero-slot-status decision ${d.cls} sell-action" data-action="sell" data-key="${encodeURIComponent(entry.p.key)}" title="Mark as already sold">SELL</button>`
+: `<span class="hero-slot-status decision ${d.cls}">${d.label}</span>`;
+return `<div class="hero-slot-row clickable" data-slot="${slotKey}" data-hero="${encodeURIComponent(name)}">
+<span class="hero-slot-icon">${SLOT_ICON[slotKey]}</span>
+<span class="hero-slot-label">${SLOT_LABEL[slotKey]}</span>
+${statusHtml}
+</div>`;
+}).join('');
+totalKeep+=keep; totalSell+=sell; totalReset+=reset;
+const problems = sell+reset+missing;
+const summaryLine = problems===0
+? `<div class="hero-card-summary ok">Full and keepable gear set</div>`
+: `<div class="hero-card-summary">${[sell?`${sell} to sell`:'', reset?`${reset} to reset`:'', missing?`${missing} not equipped`:''].filter(Boolean).join(' · ')}</div>`;
+const card = document.createElement('div');
+card.className = 'hero-card';
+card.innerHTML = `<div class="hero-card-name">${name}</div>${rows}${summaryLine}`;
+grid.appendChild(card);
+});
+grid.querySelectorAll('.hero-slot-row.clickable').forEach(row=>{
+row.addEventListener('click', ()=>{
+const heroName = decodeURIComponent(row.getAttribute('data-hero'));
+const slotKey = row.getAttribute('data-slot');
+const entry = byHero[heroName][slotKey];
+openModal(entry.p, entry.d, speedThreshold);
+});
+});
+grid.querySelectorAll('.sell-action').forEach(btn=>{
+btn.addEventListener('click', (ev)=>{
+ev.stopPropagation();
+markSold(decodeURIComponent(btn.dataset.key));
+});
+});
+grid.querySelectorAll('.hold-action').forEach(btn=>{
+btn.addEventListener('click', (ev)=>{
+ev.stopPropagation();
+unmarkHeld(decodeURIComponent(btn.dataset.key));
+});
+});
+document.getElementById('sumTotal').textContent = heroNames.length;
+document.getElementById('sumKeep').textContent = totalKeep;
+document.getElementById('sumSell').textContent = totalSell;
+document.getElementById('sumReset').textContent = totalReset;
+const soldEvaluated = parsedItems.filter(p=>soldIds.has(p.key)).length;
+const soldDiscarded = discardedItems.filter(it=>soldIds.has(itemKey(it))).length;
+document.getElementById('sumSold').textContent = soldEvaluated + soldDiscarded;
+const notEnhanced = parsedItems.filter(p=>p.enhance!==15).length;
+document.getElementById('sumSkipped').textContent = discardedItems.length + notEnhanced;
+}
+function render(){
+const speedThreshold = Number(document.getElementById('speedThreshold').value) || 0;
+const viewMode = document.getElementById('viewModeSelect').value;
+const filterSelectEl = document.getElementById('filterSelect');
+const discardedOptEl = filterSelectEl.querySelector('option[value="discarded"]');
+const resetOptEl = filterSelectEl.querySelector('option[value="reset"]');
+if(discardedOptEl) discardedOptEl.hidden = (viewMode==='archetypes');
+if(resetOptEl) resetOptEl.hidden = (viewMode==='archetypes');
+if(viewMode==='archetypes' && (filterSelectEl.value==='discarded' || filterSelectEl.value==='reset')){
+filterSelectEl.value = 'all';
+}
+if(parsedItems.length){ renderSlotTabs(); populateSetSelect(); populateArchFilterSelect(); }
+document.getElementById('archFilterField').style.display = (viewMode==='grid' || viewMode==='archetypes') ? '' : 'none';
+document.getElementById('qsfField').style.display = (viewMode==='grid') ? '' : 'none';
+if(viewMode!=='grid'){
+document.getElementById('qsfRow').classList.remove('open');
+document.getElementById('qsfToggle').classList.remove('open');
+}
+if(viewMode==='hero'){
+renderHeroView(speedThreshold);
+return;
+}
+if(viewMode==='archetypes'){
+renderArchetypeView();
+return;
+}
+const filterVal = document.getElementById('filterSelect').value;
+if(parsedItems.length) document.getElementById('slotTabs').style.display='flex';
+const sortVal = document.getElementById('sortSelect').value;
+const setVal = document.getElementById('setSelect').value;
+const rankVal = document.getElementById('rankSelect').value;
+const levelVal = document.getElementById('levelSelect').value;
+const convVal = document.getElementById('convSelect').value;
+const grid = document.getElementById('grid');
+grid.classList.remove('hero-view');
+grid.innerHTML='';
+const showingSold = filterVal==='sold';
+const showingDiscarded = filterVal==='discarded';
+document.getElementById('soldToolbar').style.display = showingSold ? 'flex' : 'none';
+let list;
+let cardMode;
+if(showingSold){
+cardMode = 'sold';
+const evaluated = parsedItems.map(p=>({key:p.key, raw:p.raw, p, d:decisionForCached(p, speedThreshold)}));
+const discarded = discardedItems.map(it=>({key:itemKey(it), raw:it, p:null, d:null}));
+list = evaluated.concat(discarded).filter(x=>soldIds.has(x.key));
+if(activeSlot!=='all') list = list.filter(x=>resolveSlot(x.raw)===activeSlot);
+if(setVal!=='all') list = list.filter(x=>x.raw.set===setVal);
+list = list.filter(x=>rankMatches(rankVal, x.raw));
+if(levelVal!=='all') list = list.filter(x=>String(x.raw.level)===levelVal);
+}else if(showingDiscarded){
+cardMode = 'discarded';
+list = discardedItems.map(it=>({key:itemKey(it), raw:it, p:null, d:null}));
+list = list.filter(x=>!soldIds.has(x.key));
+if(activeSlot!=='all') list = list.filter(x=>resolveSlot(x.raw)===activeSlot);
+if(setVal!=='all') list = list.filter(x=>x.raw.set===setVal);
+list = list.filter(x=>rankMatches(rankVal, x.raw));
+if(levelVal!=='all') list = list.filter(x=>String(x.raw.level)===levelVal);
+}else{
+cardMode = 'normal';
+list = parsedItems.map(p=>({key:p.key, raw:p.raw, p, d:decisionForCached(p, speedThreshold)}));
+list = list.filter(x=>x.p.enhance===15);
+if(activeSlot!=='all') list = list.filter(x=>x.p.slot===activeSlot);
+if(setVal!=='all') list = list.filter(x=>x.p.set===setVal);
+list = list.filter(x=>rankMatches(rankVal, x.raw));
+if(levelVal!=='all') list = list.filter(x=>String(x.p.level)===levelVal);
+if(convVal==='yes') list = list.filter(x=>x.p.hasConversion);
+if(convVal==='no') list = list.filter(x=>!x.p.hasConversion);
+let unidList = discardedItems.filter(isUnidentifiedRaw).map(it=>({key:itemKey(it), raw:it, p:null, d:null}));
+if(activeSlot!=='all') unidList = unidList.filter(x=>resolveSlot(x.raw)===activeSlot);
+if(setVal!=='all') unidList = unidList.filter(x=>x.raw.set===setVal);
+unidList = unidList.filter(x=>rankMatches(rankVal, x.raw));
+if(levelVal!=='all') unidList = [];
+list = list.concat(unidList);
+list = list.filter(x=>!soldIds.has(x.key));
+if(filterVal==='keep') list = list.filter(x=>x.d && x.d.label==='KEEP');
+if(filterVal==='sell') list = list.filter(x=>x.d && x.d.label==='SELL');
+if(filterVal==='reset') list = list.filter(x=>x.d && x.d.label==='RESET');
+}
+const archVal = document.getElementById('archFilterSelect').value;
+if(archVal==='__unmatched__'){
+list = list.filter(x=>archetypes.every(a=>!matchGearToArchetype(x.p || parseItemBasic(x.raw), a)));
+}else if(archVal!=='all'){
+const arch = archetypes.find(a=>String(a.id)===String(archVal));
+if(arch) list = list.filter(x=>matchGearToArchetype(x.p || parseItemBasic(x.raw), arch));
+}
+if(quickStatFilter.length){
+list = list.filter(x=>matchQuickStats(x.p || parseItemBasic(x.raw), quickStatFilter));
+}
+if(quickMainStatFilter.length){
+list = list.filter(x=>quickMainStatFilter.includes((x.p || parseItemBasic(x.raw)).mainType));
+}
+if(sortVal==='age_new') list.sort((a,b)=>((b.raw.ct||0)-(a.raw.ct||0))||((b.raw.id||0)-(a.raw.id||0)));
+if(sortVal==='age_old') list.sort((a,b)=>((a.raw.ct||0)-(b.raw.ct||0))||((a.raw.id||0)-(b.raw.id||0)));
+const frag = document.createDocumentFragment();
+list.forEach(entry=>{
+frag.appendChild(buildCard(entry, cardMode));
+});
+grid.appendChild(frag);
+document.getElementById('sumTotal').textContent = list.length;
+document.getElementById('sumKeep').textContent = list.filter(x=>x.d && x.d.label==='KEEP').length;
+document.getElementById('sumSell').textContent = list.filter(x=>x.d && x.d.label==='SELL').length;
+document.getElementById('sumReset').textContent = list.filter(x=>x.d && x.d.label==='RESET').length;
+const soldEvaluated = parsedItems.filter(p=>soldIds.has(p.key)).length;
+const soldDiscarded = discardedItems.filter(it=>soldIds.has(itemKey(it))).length;
+document.getElementById('sumSold').textContent = soldEvaluated + soldDiscarded;
+const notEnhanced = parsedItems.filter(p=>p.enhance!==15).length;
+const stillHiddenDiscarded = discardedItems.length - discardedItems.filter(isUnidentifiedRaw).length;
+document.getElementById('sumSkipped').textContent = stillHiddenDiscarded + notEnhanced;
+}
+function openModal(p,d,speedThreshold){
+lastModalArgs = {p,d,speedThreshold};
+const overlay = document.getElementById('overlay');
+const content = document.getElementById('modalContent');
+const modalPanel = overlay.querySelector('.modal');
+modalPanel.classList.remove('rank-Epic','rank-Heroic','otherworld');
+modalPanel.classList.add(p.rank==='Epic' ? 'rank-Epic' : 'rank-Heroic');
+if(isOtherworldRaw(p.raw)) modalPanel.classList.add('otherworld');
+let speedNote = '';
+if(d.reason==='speed'){
+speedNote = `<div class="note">Automatically kept: total Speed ${p.speedCheckValue} ≥ threshold ${speedThreshold}</div>`;
+}
+let convNote = '';
+const otherworld = isOtherworldRaw(p.raw);
+content.innerHTML = `
+<div class="modal-head">
+<div class="icon-wrap ${p.rank==='Epic'?'rank-Epic':'rank-Heroic'}${otherworld?' otherworld':''}">${SLOT_ICON[p.slot]||'❔'}</div>
+<div class="mh-text">
+<div class="rank-line">${otherworld?'<span class="otherworld-tag">Otherworldly</span>':''}<span style="color:${p.rank==='Epic'?'var(--epic)':'var(--heroic)'}">${p.rank} · Lv ${p.level} · +15 · Set ${setLabel(p.set)}</span></div>
+<h2>${SLOT_LABEL[p.slot]||p.slot}</h2>
+</div>
+</div>
+<div class="sub">Main: ${TYPE_LABEL[p.mainType]||p.mainType} ${p.mainValue}${PCT_TYPES.has(p.mainType)?'%':''} &nbsp;|&nbsp; <span class="decision ${d.cls}">${d.label}</span>${p.heroName?` &nbsp;|&nbsp; <span class="hero-name">${p.heroName}</span>`:''}</div>
+${speedNote}
+${convNote}
+${p.substats.map(s=>renderSubstatBlock(s, p.level, p.tier, p.rank)).join('')}
+<div class="sold-actions" style="margin-top:14px;">
+${soldIds.has(p.key)
+? `<button type="button" class="restore-btn" id="modalSoldBtn">RESTORE</button>`
+: `${d.label==='SELL' ? `<button type="button" class="mark-hold-btn${heldIds.has(p.key)?' active':''}" id="modalHoldBtn" title="Keep this piece even though the verdict is SELL">HOLD</button>` : ''}<button type="button" class="mark-sold-btn" id="modalSoldBtn">SELL</button>`}
+</div>
+`;
+overlay.classList.add('open');
+document.getElementById('modalSoldBtn').addEventListener('click', ()=>{
+if(soldIds.has(p.key)) unmarkSold(p.key); else markSold(p.key);
+overlay.classList.remove('open');
+});
+const holdBtn = document.getElementById('modalHoldBtn');
+if(holdBtn){
+holdBtn.addEventListener('click', ()=>{
+if(heldIds.has(p.key)) unmarkHeld(p.key); else markHeld(p.key);
+overlay.classList.remove('open');
+});
+}
+}
+function openEditModal(raw){
+const gaps = detectGaps(raw);
+if(!gaps.length) return;
+const overlay = document.getElementById('overlay');
+const content = document.getElementById('modalContent');
+const modalPanel = overlay.querySelector('.modal');
+modalPanel.classList.remove('rank-Epic','rank-Heroic','otherworld');
+modalPanel.classList.add(raw.rank==='Epic' ? 'rank-Epic' : 'rank-Heroic');
+const mainLabel = TYPE_LABEL[raw.main && raw.main.type] || (raw.main && raw.main.type) || 'Main stat';
+const isPct = raw.main && PCT_TYPES.has(raw.main.type);
+const rows = [];
+if(gaps.includes('level')){
+rows.push(`
+<div class="field">
+<label>Level (read it in-game — this isn't affected by the icon issue)</label>
+<select id="editLevel">
+<option value="" disabled selected>-- select --</option>
+<option value="85">85</option>
+<option value="88">88</option>
+<option value="90">90</option>
+</select>
+</div>`);
+}
+if(gaps.includes('slot')){
+rows.push(`
+<div class="field">
+<label>Gear slot</label>
+<select id="editSlot">
+<option value="" disabled selected>-- select --</option>
+${SLOT_ORDER.map(s=>`<option value="${s}">${SLOT_LABEL[s]}</option>`).join('')}
+</select>
+</div>`);
+}
+if(gaps.includes('mainValue')){
+rows.push(`
+<div class="field">
+<label>${mainLabel} value${isPct?' (%)':''} — cosmetic only, doesn't affect the score</label>
+<input type="number" id="editMainValue" step="any" placeholder="e.g. ${isPct?'13':'103'}">
+</div>`);
+}
+content.innerHTML = `
+<div class="modal-head">
+<div class="icon-wrap ${raw.rank==='Epic'?'rank-Epic':'rank-Heroic'}">${SLOT_ICON[resolveSlot(raw)]||'❔'}</div>
+<div class="mh-text">
+<div class="rank-line"><span style="color:${raw.rank==='Epic'?'var(--epic)':'var(--heroic)'}">${raw.rank} · Set ${setLabel(raw.set)}</span></div>
+<h2>Fill in missing data</h2>
+</div>
+</div>
+<div class="sub">Not identified yet by the export tool — this only fills in what's still missing; anything the tool already read (substats, set, rank) is untouched.</div>
+<div class="edit-form">${rows.join('')}</div>
+<div class="sold-actions" style="margin-top:14px;">
+<button type="button" class="mark-sold-btn" id="editSaveBtn">SAVE</button>
+</div>
+`;
+overlay.classList.add('open');
+document.getElementById('editSaveBtn').addEventListener('click', ()=>{
+const patch = {};
+const levelSel = document.getElementById('editLevel');
+if(levelSel && levelSel.value) patch.level = Number(levelSel.value);
+const slotSel = document.getElementById('editSlot');
+if(slotSel && slotSel.value) patch.type = slotSel.value;
+const mainInput = document.getElementById('editMainValue');
+if(mainInput && mainInput.value!=='') patch.mainValue = Number(mainInput.value);
+if(Object.keys(patch).length===0){ overlay.classList.remove('open'); return; }
+manualOverrides[raw.id] = Object.assign({}, manualOverrides[raw.id], patch);
+saveManualOverrides();
+applyManualOverrides(raw);
+if(!isUnidentifiedRaw(raw)){
+const idx = discardedItems.indexOf(raw);
+if(idx!==-1) discardedItems.splice(idx,1);
+const p = parseItem(raw);
+if(p) parsedItems.push(p);
+else discardedItems.push(raw);
+}
+overlay.classList.remove('open');
+renderSlotTabs();
+populateSetSelect();
+render();
+});
+}
+const IE_LABEL = {config:'Config', archetypes:'Archetypes', appearance:'Appearance'};
+function ieShowMsg(text, isErr){
+const el = document.getElementById('ieMsg');
+if(!el) return;
+el.textContent = text;
+el.classList.toggle('err', !!isErr);
+}
+function ieDownload(filename, obj){
+const blob = new Blob([JSON.stringify(obj, null, 2)], {type:'application/json'});
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url; a.download = filename;
+document.body.appendChild(a); a.click(); a.remove();
+URL.revokeObjectURL(url);
+}
+function ieBuildPayload(kind){
+if(kind==='config'){
+return {kind:'config', data: JSON.parse(localStorage.getItem(STORAGE_KEYS.CONFIG) || 'null')};
+}
+if(kind==='archetypes'){
+return {kind:'archetypes', data: JSON.parse(localStorage.getItem(STORAGE_KEYS.ARCHETYPES) || '[]')};
+}
+if(kind==='appearance'){
+return {kind:'appearance', data:{
+palette: JSON.parse(localStorage.getItem(STORAGE_KEYS.PALETTE_CURRENT) || 'null'),
+favorites: JSON.parse(localStorage.getItem(STORAGE_KEYS.PALETTE_FAVS) || '[]'),
+settings: JSON.parse(localStorage.getItem(STORAGE_KEYS.PALETTE_SETTINGS) || 'null')
+}};
+}
+return null;
+}
+function ieExport(kind){
+const payload = ieBuildPayload(kind);
+if(!payload || payload.data===null){
+ieShowMsg(`Nothing to export yet for ${IE_LABEL[kind]}.`, true);
+return;
+}
+const date = new Date().toISOString().slice(0,10);
+ieDownload(`gearEval_${kind}_${date}.json`, payload);
+ieShowMsg(`${IE_LABEL[kind]} exported.`);
+}
+function ieImport(kind, file){
+const reader = new FileReader();
+reader.onload = ()=>{
+let parsed;
+try{ parsed = JSON.parse(reader.result); }
+catch(e){ ieShowMsg(`That file isn't valid JSON.`, true); return; }
+const payload = (parsed && parsed.kind && parsed.data!==undefined) ? parsed : {kind, data:parsed};
+if(payload.kind !== kind){
+ieShowMsg(`That file looks like "${IE_LABEL[payload.kind]||payload.kind}", not "${IE_LABEL[kind]}". Import cancelled.`, true);
+return;
+}
+try{
+if(kind==='config'){
+localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(payload.data));
+CONFIG = payload.data;
+cfgDraft = null;
+invalidateDecisionCache();
+} else if(kind==='archetypes'){
+localStorage.setItem(STORAGE_KEYS.ARCHETYPES, JSON.stringify(payload.data));
+archetypes = payload.data;
+if(typeof aqRenderList==='function') aqRenderList();
+} else if(kind==='appearance'){
+const d = payload.data || {};
+if(d.palette) localStorage.setItem(STORAGE_KEYS.PALETTE_CURRENT, JSON.stringify(d.palette));
+if(d.favorites) localStorage.setItem(STORAGE_KEYS.PALETTE_FAVS, JSON.stringify(d.favorites));
+if(d.settings) localStorage.setItem(STORAGE_KEYS.PALETTE_SETTINGS, JSON.stringify(d.settings));
+if(d.palette && typeof window.ieApplyPalette==='function') window.ieApplyPalette(d.palette);
+}
+ieShowMsg(`${IE_LABEL[kind]} imported.`);
+render();
+if(document.getElementById('configOverlay').classList.contains('open')){
+renderConfigModal();
+}
+if(document.getElementById('aqListOverlay') && document.getElementById('aqListOverlay').classList.contains('open')){
+aqRenderList();
+}
+}catch(e){
+ieShowMsg(`Import failed: ${e.message}`, true);
+}
+};
+reader.readAsText(file);
+}
+function fmtNum(n){
+if(n===null || n===undefined) return n;
+return Number.isInteger(n) ? String(n) : n.toFixed(1);
+}
+function theoBarHtml(value, theoMin, theoMax, suffix, mini, opts){
+if(theoMax===null || theoMin===null || theoMax<=theoMin) return '';
+opts = opts || {};
+let pct = ((value-theoMin)/(theoMax-theoMin))*100;
+pct = Math.max(0, Math.min(100, pct));
+const color = opts.rank==='Heroic' ? 'var(--heroic)' : 'var(--epic)';
+const valueLabel = opts.label!==undefined ? opts.label : `+${fmtNum(value)}${suffix}`;
+const valueHtml = valueLabel ? `<span class="theo-value" style="color:${color}">${valueLabel}</span>` : '';
+let targetHtml = '';
+let targetMarkHtml = '';
+let hasTargetLabel = false;
+if(opts.targetValue!==undefined && opts.targetValue!==null){
+let tpct = ((opts.targetValue-theoMin)/(theoMax-theoMin))*100;
+tpct = Math.max(0, Math.min(100, tpct));
+if(tpct>pct+0.3){
+const ghostColor = opts.rank==='Heroic' ? '#c39bd3' : '#cc5748';
+targetHtml = `<div class="theo-ghost" style="left:${pct.toFixed(1)}%;width:${(tpct-pct).toFixed(1)}%;background:${ghostColor}" title="If that base roll had been maximum, you would have reached ${fmtNum(opts.targetValue)}${suffix}"></div>`;
+if(tpct<99.3){
+const closeby = (tpct-pct) < 12;
+const targetLabelPct = Math.max(4, Math.min(96, tpct));
+targetMarkHtml = `<div class="theo-mark target" style="left:${tpct.toFixed(1)}%" title="With a perfect base roll it would have reached ${fmtNum(opts.targetValue)}${suffix}"></div><div class="theo-mark-label below target${closeby?' stacked':''}" style="left:${targetLabelPct.toFixed(1)}%">${fmtNum(opts.targetValue)}${suffix}</div>`;
+hasTargetLabel = closeby;
+} else {
+targetMarkHtml = `<div class="theo-mark target" style="left:${tpct.toFixed(1)}%" title="With a perfect base roll it would have reached ${fmtNum(opts.targetValue)}${suffix}"></div>`;
+}
+}
+}
+const atMax = pct>=99.9;
+const atMin = pct<=0.1;
+const labelPct = Math.max(4, Math.min(96, pct));
+const markHtml = `<div class="theo-mark" style="left:${pct.toFixed(1)}%" title="Ended at ${fmtNum(value)}${suffix}"></div>${(atMax||atMin)?'':`<div class="theo-mark-label below${hasTargetLabel?' stacked':''}" style="left:${labelPct.toFixed(1)}%">${fmtNum(value)}${suffix}</div>`}`;
+return `
+<div class="theo-bar${mini?' mini':''}">
+${valueHtml}
+<span class="theo-edge">${fmtNum(theoMin)}${suffix}</span>
+<div class="theo-track"><div class="theo-fill" style="width:${pct.toFixed(1)}%;background:${color}"></div>${targetHtml}${targetMarkHtml}${markHtml}</div>
+<span class="theo-edge">${fmtNum(theoMax)}${suffix}</span>
+</div>`;
+}
+function chipHtml(cls, text){
+return `<span class="chip ${cls}">${text}</span>`;
+}
+function renderSubstatBlock(s, level, tier, rank){
+const tierCfg = (typeof CONFIG!=='undefined' && CONFIG.tiers && tier) ? (CONFIG.tiers[tier] || CONFIG.tiers['85heroic']) : null;
+const cat = TYPE_TO_CATEGORY[s.type];
+const perRollMin = (tierCfg && cat!==undefined) ? thresholdFor(tierCfg, cat, 1) : undefined;
+const suffix = PCT_TYPES.has(s.type) ? '%' : '';
+const avgTxt = s.avg===null ? '—' : s.avg.toFixed(0)+'%';
+const avgCls = '';
+const convMark = s.modified ? ' <span class="conv-mark">⇄</span>' : '';
+let headLine = `${TYPE_LABEL[s.type]||s.type}${convMark} ${s.value}${suffix}`;
+let body = '';
+let lines = '';
+let hideBadge = false;
+let rollCount = 0;
+let headChips = '';
+let convRangeHtml = '';
+if(s.modified){
+if(s.mejoraCount===0){
+if(s.hasGemTable && s.gemMax!==null && s.gemMax>s.value){
+headLine += ` <span class="max-hint">(max ${s.gemMax}${suffix})</span>`;
+} else if(!s.hasGemTable && s.range && s.range[1]>s.value){
+headLine += ` <span class="max-hint">(max ${s.range[1]}${suffix})</span>`;
+}
+} else if(s.hasGemTable){
+hideBadge = true;
+rollCount = s.mejoraCount;
+const atGemCeiling = s.value>=s.gemMax;
+if(!atGemCeiling && s.gemMax!==null){
+headLine += `<span class="max-hint">(max ${s.gemMax}${suffix})</span>`;
+}
+if(s.naturalMin!==null && s.naturalMax!==null){
+const rb = (level===90) ? (s.convReforgeBonus||0) : 0;
+const natMin = s.naturalMin + rb, natMax = s.naturalMax + rb;
+convRangeHtml = `<span class="max-hint">(${fmtNum(natMin)}–${fmtNum(natMax)}${suffix})</span>`;
+}
+const clampNote = s.mejoraCount >= s.gemTableLen ? ` <i>(${s.mejoraCount} subidas sin confirmar — aproximado con el dato de ${s.gemTableLen-1})</i>` : '';
+const mismatchNote = (s.gemMax!==null && s.value>s.gemMax) ? (
+level===90
+? ` <i>(exceeds the ceiling — probably a reforge bonus not yet subtracted on converted stats)</i>`
+: ` <i>(exceeds the table ceiling — data not yet confirmed)</i>`
+) : '';
+body = (clampNote || mismatchNote) ? `<div class="stat-summary-line">${clampNote}${mismatchNote}</div>` : '';
+} else {
+hideBadge = true;
+rollCount = s.mejoraCount;
+body = `<div class="stat-summary-line">Conversion, <b>${s.mejoraCount}</b> Roll${s.mejoraCount>1?'s':''} — no confirmed gem ceiling, evaluated 100%.</div>`;
+}
+} else if(s.baseVal!==undefined && s.baseVal!==null){
+const nMejoras = s.rollDetails.length;
+if(nMejoras>0){
+hideBadge = true;
+if(s.range){
+const rollChips = s.rollDetails.map(r=>{
+const cls = (perRollMin!==undefined) ? (r.value>=perRollMin ? 'g' : 'r') : qualityClass(r.quality);
+return chipHtml(cls, `+${fmtNum(r.value)}${suffix}`);
+}).join('');
+const rb = s.reforgeBonus||0;
+headLine = `${TYPE_LABEL[s.type]||s.type}${convMark} ${s.value}${suffix}`;
+const reforgeChip90 = rb ? `<span class="chip reforge">Reforja +${fmtNum(rb)}${suffix}</span>` : '';
+headChips = `<div class="chip-row inline"><span class="chip base ${rank==='Epic'?'rank-Epic':(rank==='Heroic'?'rank-Heroic':'')}">Base ${fmtNum(s.baseVal)}${suffix}</span>${rollChips}${reforgeChip90}</div>`;
+const theoMin = Math.round((s.range[0]*(nMejoras+1) + rb)*100)/100;
+const theoMax = s.absoluteMax;
+lines = theoBarHtml(s.value, theoMin, theoMax, suffix, false, {
+label: '',
+rank: rank
+});
+lines += `<div class="roll-range-caption">Roll range: ${fmtNum(s.range[0])}${suffix} – ${fmtNum(s.range[1])}${suffix}</div>`;
+}
+} else {
+const rb0 = s.reforgeBonus||0;
+const trueMax = s.range ? Math.round((s.range[1]+rb0)*100)/100 : null;
+const atCeilingNoRolls = trueMax!==null && trueMax<=s.value;
+if(!atCeilingNoRolls && trueMax!==null) headLine += ` <span class="max-hint">(max ${fmtNum(trueMax)}${suffix})</span>`;
+}
+}
+const rightBadge = headChips || ((!hideBadge && s.avg!==null)
+? `<span class="avg q ${avgCls}">${avgTxt}</span>`
+: (rollCount>0 ? `<span class="conv-range-group">${convRangeHtml}<span class="roll-count">(${rollCount})</span></span>` : ''));
+return `
+<div class="roll-block ${avgCls}">
+<div class="rb-head"><span>${headLine}</span>${rightBadge}</div>
+${body}
+${lines}
+</div>
+`;
+}
+let lastSetSelectSignature = null;
+function populateSetSelect(force){
+const sel = document.getElementById('setSelect');
+const currentViewMode = document.getElementById('viewModeSelect').value;
+const signature = currentViewMode + '|' + parsedItems.length + '|' + discardedItems.length;
+if(!force && signature===lastSetSelectSignature) return;
+lastSetSelectSignature = signature;
+const pool = currentViewMode==='archetypes'
+? parsedItems
+: parsedItems.filter(p=>p.enhance===15).concat(discardedItems.filter(isUnidentifiedRaw).map(it=>({set:it.set})));
+const selectedVal = sel.value;
+const counts = {};
+pool.forEach(p=>{ counts[p.set] = (counts[p.set]||0)+1; });
+const sets = Object.keys(counts).sort((a,b)=>setLabel(a).localeCompare(setLabel(b)));
+sel.innerHTML = `<option value="all">All (${pool.length})</option>` +
+sets.map(s=>`<option value="${s}">${setLabel(s)} (${counts[s]})</option>`).join('');
+if(selectedVal && sel.querySelector(`option[value="${selectedVal}"]`)) sel.value = selectedVal;
+}
+document.getElementById('fileInput').addEventListener('change', (ev)=>{
+const file = ev.target.files[0];
+if(!file) return;
+const fnEl = document.getElementById('filename'); if(fnEl) fnEl.textContent = file.name;
+const reader = new FileReader();
+reader.onload = (e)=>{
+try{
+const data = JSON.parse(e.target.result);
+const items = data.items || data;
+heroNameById = {};
+const heroesByName = {};
+(data.heroes||[]).forEach(h=>{ (heroesByName[h.name]=heroesByName[h.name]||[]).push(h); });
+Object.values(heroesByName).forEach(list=>{
+list.sort((a,b)=>(a.ct||0)-(b.ct||0));
+list.forEach((h,i)=>{ heroNameById[h.id] = i===0 ? h.name : `${h.name} #${i+1}`; });
+});
+parsedItems = [];
+discardedItems = [];
+skippedCount = 0;
+invalidateDecisionCache();
+items.forEach(it=>{
+applyManualOverrides(it);
+const p = parseItem(it);
+if(p) parsedItems.push(p);
+else { skippedCount++; discardedItems.push(it); }
+});
+activeSlot = 'all';
+document.getElementById('hint').style.display='none';
+document.getElementById('summaryBar').style.display='flex';
+document.getElementById('slotTabs').style.display='flex';
+renderSlotTabs();
+populateSetSelect();
+render();
+}catch(err){
+alert('Could not read gear.txt: '+err.message);
+}
+};
+reader.readAsText(file);
+});
+document.getElementById('restoreAllBtn').addEventListener('click', restoreAllSold);
+document.getElementById('forgetSoldBtn').addEventListener('click', forgetSoldHistory);
+['filterSelect','sortSelect','setSelect','rankSelect','levelSelect','convSelect','viewModeSelect','archFilterSelect'].forEach(id=>{
+document.getElementById(id).addEventListener('input', ()=>{ if(parsedItems.length) render(); });
+document.getElementById(id).addEventListener('change', ()=>{ if(parsedItems.length) render(); });
+});
+(function(){
+let t = null;
+document.getElementById('speedThreshold').addEventListener('input', ()=>{
+clearTimeout(t);
+t = setTimeout(()=>{ if(parsedItems.length) render(); }, 200);
+});
+})();
+function renderQsfChips(){
+const box = document.getElementById('qsfChips');
+box.innerHTML = quickStatFilter.map((f,i)=>`
+<div class="qsf-chip" data-idx="${i}">${TYPE_LABEL[f.stat]||f.stat}
+<input type="number" placeholder="min" value="${f.min||''}" data-idx="${i}" class="qsfMinInput">
+<span class="x" data-idx="${i}">✕</span>
+</div>`).join('');
+const activeCount = quickStatFilter.length + quickMainStatFilter.length;
+const badgeTxt = activeCount ? `Stat filter (${activeCount})` : 'Stat filter';
+const toggleBtn = document.getElementById('qsfToggle');
+document.getElementById('qsfToggleLabel').textContent = badgeTxt;
+toggleBtn.classList.toggle('has-filters', activeCount > 0);
+box.querySelectorAll('.qsfMinInput').forEach(inp=>{
+inp.addEventListener('input', ()=>{
+quickStatFilter[inp.dataset.idx].min = inp.value;
+if(parsedItems.length) render();
+});
+});
+box.querySelectorAll('.x').forEach(x=>{
+x.addEventListener('click', ()=>{
+quickStatFilter.splice(Number(x.dataset.idx),1);
+renderQsfChips();
+if(parsedItems.length) render();
+});
+});
+}
+function openQsfMenu(){
+const menu = document.getElementById('qsfMenu');
+const used = quickStatFilter.map(f=>f.stat);
+const avail = ARCH_STAT_ORDER.filter(s=>!used.includes(s));
+if(!avail.length || quickStatFilter.length>=ARCH_MAX_SUBSTATS){ menu.classList.remove('open'); return; }
+menu.innerHTML = avail.map(s=>`<div data-stat="${s}">${TYPE_LABEL[s]||s}</div>`).join('');
+const r = document.getElementById('qsfAdd').getBoundingClientRect();
+menu.style.top = (r.bottom + window.scrollY + 4) + 'px';
+menu.style.left = (r.left + window.scrollX) + 'px';
+menu.classList.add('open');
+menu.querySelectorAll('div').forEach(d=>{
+d.addEventListener('click', ()=>{
+quickStatFilter.push({stat:d.dataset.stat, min:''});
+menu.classList.remove('open');
+renderQsfChips();
+if(parsedItems.length) render();
+});
+});
+}
+document.getElementById('qsfToggle').addEventListener('click', ()=>{
+const willOpen = !document.getElementById('qsfToggle').classList.contains('open');
+document.getElementById('qsfRow').classList.toggle('open');
+document.getElementById('qsfToggle').classList.toggle('open');
+const thumb = document.querySelector('#qsfSwitch .qsf-switch-thumb');
+thumb.classList.remove('anim-on','anim-off');
+void thumb.offsetWidth;
+thumb.classList.add(willOpen ? 'anim-on' : 'anim-off');
+thumb.addEventListener('animationend', ()=>thumb.classList.remove('anim-on','anim-off'), {once:true});
+});
+document.getElementById('qsfAdd').addEventListener('click', (ev)=>{ ev.stopPropagation(); openQsfMenu(); });
+document.getElementById('qsfClear').addEventListener('click', ()=>{
+quickStatFilter = [];
+renderQsfChips();
+if(parsedItems.length) render();
+});
+document.addEventListener('click', (e)=>{
+const menu = document.getElementById('qsfMenu');
+if(menu.classList.contains('open') && !menu.contains(e.target) && e.target.id!=='qsfAdd'){
+menu.classList.remove('open');
+}
+const mainMenu = document.getElementById('qsfMainMenu');
+if(mainMenu.classList.contains('open') && !mainMenu.contains(e.target) && e.target.id!=='qsfMainAdd'){
+mainMenu.classList.remove('open');
+}
+});
+renderQsfChips();
+function populateArchFilterSelect(){
+const sel = document.getElementById('archFilterSelect');
+const prev = sel.value;
+if(!archetypes.length){
+sel.innerHTML = '<option value="all">All</option>';
+sel.disabled = true;
+return;
+}
+sel.disabled = false;
+const pool = parsedItems.filter(p=>p.enhance===15 && !soldIds.has(p.key));
+const unmatchedN = pool.filter(p=>archetypes.every(a=>!matchGearToArchetype(p,a))).length;
+sel.innerHTML = `<option value="all">All (${pool.length})</option>` +
+archetypes.map(a=>{
+const n = pool.filter(p=>matchGearToArchetype(p, a)).length;
+return `<option value="${a.id}">${a.name||'(no name)'} (${n})</option>`;
+}).join('') +
+`<option value="__unmatched__">Unmatched (${unmatchedN})</option>`;
+if(prev && sel.querySelector(`option[value="${prev}"]`)) sel.value = prev;
+}
+const GRID_COLS_KEY = STORAGE_KEYS.GRID_COLS;
+const GRID_COLS_OPTIONS = [4,5,6,7,8];
+let gridCols = 6;
+try{
+const savedCols = Number(localStorage.getItem(GRID_COLS_KEY));
+if(GRID_COLS_OPTIONS.includes(savedCols)) gridCols = savedCols;
+}catch(e){}
+function applyGridCols(){
+document.getElementById('grid').style.gridTemplateColumns = `repeat(${gridCols}, minmax(180px, 1fr))`;
+document.querySelectorAll('.cols-btn').forEach(btn=>{
+btn.classList.toggle('active', Number(btn.dataset.cols)===gridCols);
+});
+}
+function renderColsToggle(){
+const box = document.getElementById('colsToggle');
+box.innerHTML = GRID_COLS_OPTIONS.map(n=>`<button type="button" class="cols-btn" data-cols="${n}">${n}</button>`).join('');
+box.querySelectorAll('.cols-btn').forEach(btn=>{
+btn.addEventListener('click', ()=>{
+gridCols = Number(btn.dataset.cols);
+try{ localStorage.setItem(GRID_COLS_KEY, String(gridCols)); }catch(e){}
+applyGridCols();
+});
+});
+applyGridCols();
+}
+renderColsToggle();
+document.getElementById('closeModal').addEventListener('click', ()=>{
+document.getElementById('overlay').classList.remove('open');
+});
+let cfgDraft = null;
+let cfgViewCriterion = 1;
+function captureDraftFromDOM(content){
+if(!content) return;
+const tc = cfgDraft.tiers[cfgDraft.activeTier];
+const minInputs = content.querySelectorAll('.cfgMin');
+if(minInputs.length){
+minInputs.forEach(inp=>{
+const lo = Number(inp.min), hi = Number(inp.max);
+let v = Number(inp.value) || 0;
+v = Math.min(hi, Math.max(lo, v));
+tc.minAceptable[inp.dataset.cat] = v;
+});
+}
+const sumInputs = content.querySelectorAll('.cfgSum');
+if(sumInputs.length){
+CATS.forEach(c=>{ tc.sumTable[c] = tc.sumTable[c] || [0,0,0,0,0,0]; });
+sumInputs.forEach(inp=>{
+const lo = Number(inp.min), hi = Number(inp.max);
+let v = Number(inp.value) || 0;
+v = Math.min(hi, Math.max(lo, v));
+tc.sumTable[inp.dataset.cat][Number(inp.dataset.i)] = v;
+});
+}
+const minPointsInput = content.querySelector('#cfgMinPoints');
+if(minPointsInput){
+const lo = Number(minPointsInput.min), hi = Number(minPointsInput.max);
+let v = Number(minPointsInput.value) || 0;
+tc.minPoints = Math.min(hi, Math.max(lo, v));
+}
+const resetMinInputs = content.querySelectorAll('.cfgResetMin');
+if(resetMinInputs.length){
+resetMinInputs.forEach(inp=>{
+const lo = Number(inp.min), hi = Number(inp.max);
+let v = Number(inp.value) || 0;
+v = Math.min(hi, Math.max(lo, v));
+tc.resetMinAceptable[inp.dataset.cat] = v;
+});
+}
+const resetMinPointsInput = content.querySelector('#cfgResetMinPoints');
+if(resetMinPointsInput){
+const lo = Number(resetMinPointsInput.min), hi = Number(resetMinPointsInput.max);
+let v = Number(resetMinPointsInput.value) || 0;
+tc.resetMinPoints = Math.min(hi, Math.max(lo, v));
+}
+}
+function renderConfigModal(){
+const content = document.getElementById('configModalContent');
+if(!cfgDraft) cfgDraft = JSON.parse(JSON.stringify(CONFIG));
+const tier = cfgDraft.activeTier;
+const tc = cfgDraft.tiers[tier];
+const isC1 = cfgViewCriterion===1;
+const isC2 = cfgViewCriterion===2;
+const isC3 = cfgViewCriterion===3;
+const realRange = ROLL_RANGES[tier];
+const tableHtml = isC3 ? `
+<div class="cfg2-rows">
+${CATS.map(c=>{
+const rr = realRange[c];
+const isFlat = FLAT_CATS.includes(c);
+const on = isFlat && !!(tc.resetFlatExcluded && tc.resetFlatExcluded[c]);
+return `<div class="cfg2-row">
+<div class="cfg2-namewrap">
+<div class="cfg2-name">${CAT_LABEL[c]}</div>
+<div class="cfg2-range">Range: ${rr[0]}&ndash;${rr[1]}</div>
+</div>
+<div class="cfg2-inputgroup">
+${isFlat ? `<div class="excl-box ${on?'on':''}" data-excl-cat="${c}" data-excl-kind="c3" title="Exclude this stat from the reset criterion"></div>` : ''}
+<input type="number" step="1" class="cfgResetMin cfg2-input" data-cat="${c}" value="${tc.resetMinAceptable[c]}" min="${rr[0]}" max="${rr[1]}">
+</div>
+</div>`;
+}).join('')}
+</div>
+` : isC1 ? `
+<div class="cfg2-rows">
+${CATS.map(c=>{
+const rr = realRange[c];
+const isFlat = FLAT_CATS.includes(c);
+const on = isFlat && !!(tc.flatExcluded && tc.flatExcluded[c]);
+return `<div class="cfg2-row">
+<div class="cfg2-namewrap">
+<div class="cfg2-name">${CAT_LABEL[c]}</div>
+<div class="cfg2-range">Range: ${rr[0]}&ndash;${rr[1]}</div>
+</div>
+<div class="cfg2-inputgroup">
+${isFlat ? `<div class="excl-box ${on?'on':''}" data-excl-cat="${c}" data-excl-kind="c12" title="Exclude this stat from the KEEP points"></div>` : ''}
+<input type="number" step="1" class="cfgMin cfg2-input" data-cat="${c}" value="${tc.minAceptable[c]}" min="${rr[0]}" max="${rr[1]}">
+</div>
+</div>`;
+}).join('')}
+</div>
+` : (()=>{
+const maxN = TIER_MAX_ROLLS[tier] + (tc.baseCounts[2] ? 1 : 0);
+return `
+<div class="cfg2-tablewrap"><table class="cfg-table">
+<tbody>
+${CATS.map(c=>{
+const rr = realRange[c];
+const isFlat = FLAT_CATS.includes(c);
+const on = isFlat && !!(tc.flatExcluded && tc.flatExcluded[c]);
+return `<tr><td class="catname">${CAT_LABEL[c]}</td>${[0,1,2,3,4,5].map(i=>{
+const n = i+1;
+const disabled = n>maxN ? 'disabled' : '';
+return `<td>
+<input type="number" step="1" class="cfgSum" data-cat="${c}" data-i="${i}" value="${tc.sumTable[c][i]}" min="${rr[0]*n}" max="${rr[1]*n}" ${disabled}>
+<div class="cfg-range">${n>maxN ? 'Not applicable in this tier' : `Range: ${rr[0]*n}&ndash;${rr[1]*n}`}</div>
+</td>`;
+}).join('')}<td class="excl-cell">${isFlat ? `<div class="excl-box ${on?'on':''}" data-excl-cat="${c}" data-excl-kind="c12" title="Exclude this stat from the KEEP points"></div>` : ''}</td></tr>`;
+}).join('')}
+</tbody>
+</table></div>
+`;})();
+const critTitle = isC3 ? 'Reset settings' : (isC1?'Method 1':'Method 2');
+const extraSectionsHtml = isC3 ? `
+<div class="cfg2-sectiontitle">Points to reset</div>
+<div class="cfg2-toggleline">
+<div class="cfg2-toggleline-left">
+<div class="excl-box ${tc.resetEnabled!==false?'on':''}" id="cfgResetEnabledBox" title="If off, pieces of this tier never come out as RESET: they go straight to KEEP/SELL"></div>
+<label id="cfgResetEnabledLabel">Consider reset</label>
+</div>
+<div class="cfg2-toggleline-right">
+<label>MINIMUM BASE SUBSTATS</label>
+<input type="number" id="cfgResetMinPoints" min="0" max="${TIER_BIRTH_COUNT[tier]}" value="${tc.resetMinPoints}" ${tc.resetEnabled===false?'disabled':''}>
+</div>
+</div>
+` : `
+<div class="cfg2-sectiontitle">Modifications</div>
+<div class="cfg2-convtable">
+${CATS.map(c=>`<div class="cfg2-convrow">
+<div class="cfg2-name">${CAT_LABEL[c]}</div>
+<div class="cfg2-convboxes">${[1,2,3,4,5].map(n=>{
+const disabled = n>TIER_MAX_ROLLS[tier];
+const on = !!(tc.convAccepted[c] && tc.convAccepted[c][n]);
+return `<div class="conv-box ${on?'on':''} ${disabled?'disabled':''}" data-conv-cat="${c}" data-conv-n="${n}" title="${disabled?'Not applicable in this tier':(on?'Accepts '+n+' bonus (click to turn off)':'Does not accept '+n+' bonus (click to turn on)')}">${n}</div>`;
+}).join('')}</div>
+</div>`).join('')}
+</div>
+<div class="cfg2-sectiontitle">Points to keep</div>
+<div class="cfg2-toggleline">
+<div class="cfg2-toggleline-left">
+<div class="excl-box ${tc.baseCounts[cfgViewCriterion]?'on':''}" id="cfgBaseCountBox" title="Count the base roll as one more roll, in addition to the bonuses"></div>
+<label id="cfgBaseCountLabel">Count base roll as one more roll</label>
+</div>
+<div class="cfg2-toggleline-right">
+<label>MINIMUM POINTS TO KEEP</label>
+<input type="number" id="cfgMinPoints" min="1" max="${TIER_MAX_ROLLS[tier] + (tc.baseCounts[cfgViewCriterion] ? STATS_AT_15 : 0)}" value="${tc.minPoints}">
+</div>
+</div>
+`;
+content.innerHTML = `
+<div class="cfg2-header"><div class="dot"></div><h2>Settings</h2></div>
+<div class="cfg2-tabsline">
+<div class="cfg2-tabgroup">
+<button type="button" class="cfg2-pill ${tc.activeCriterion===1?'active':(isC1?'active ghost':'')}" id="cfgToggle1">Method 1</button>
+<button type="button" class="cfg2-pill ${tc.activeCriterion===2?'active':(isC2?'active ghost':'')}" id="cfgToggle2">Method 2</button>
+<button type="button" class="cfg2-pill ${isC3?'active ghost':''}" id="cfgToggle3">Reset settings${tc.resetEnabled===false?' (off)':''}</button>
+</div>
+<div class="cfg2-tabgroup">
+${TIERS.map(t=>`<button type="button" class="cfg2-pill cfgTierBtn ${t===tier?'active':''}" data-tier="${t}">${TIER_SHORT_LABEL[t]}</button>`).join('')}
+</div>
+</div>
+${(isC1||isC2||isC3) ? '' : `<div class="cfg2-sectiontitle">Minimum acceptable per roll</div>`}
+${tableHtml}
+${extraSectionsHtml}
+<div class="cfg2-savebar">
+<button type="button" class="cfg2-savebtn" id="cfgSaveBtn">Save and apply</button>
+</div>
+`;
+content.querySelectorAll('.cfgTierBtn').forEach(btn=>{
+btn.addEventListener('click', ()=>{
+const newTier = btn.dataset.tier;
+if(newTier===cfgDraft.activeTier) return;
+captureDraftFromDOM(content);
+cfgDraft.activeTier = newTier;
+renderConfigModal();
+});
+});
+document.getElementById('cfgToggle1').addEventListener('click', ()=>{
+if(cfgViewCriterion===1){
+if(tc.activeCriterion===1) return;
+tc.activeCriterion = 1;
+renderConfigModal();
+return;
+}
+captureDraftFromDOM(content);
+cfgViewCriterion = 1;
+renderConfigModal();
+});
+document.getElementById('cfgToggle2').addEventListener('click', ()=>{
+if(cfgViewCriterion===2){
+if(tc.activeCriterion===2) return;
+tc.activeCriterion = 2;
+renderConfigModal();
+return;
+}
+captureDraftFromDOM(content);
+cfgViewCriterion = 2;
+renderConfigModal();
+});
+document.getElementById('cfgToggle3').addEventListener('click', ()=>{
+if(cfgViewCriterion===3) return;
+captureDraftFromDOM(content);
+cfgViewCriterion = 3;
+renderConfigModal();
+});
+content.querySelectorAll('.conv-box:not(.disabled)').forEach(box=>{
+box.addEventListener('click', ()=>{
+const c = box.dataset.convCat, n = box.dataset.convN;
+tc.convAccepted[c][n] = !tc.convAccepted[c][n];
+renderConfigModal();
+});
+});
+const baseCountBox = content.querySelector('#cfgBaseCountBox');
+if(baseCountBox){
+const toggleBase = ()=>{
+captureDraftFromDOM(content);
+tc.baseCounts[cfgViewCriterion] = !tc.baseCounts[cfgViewCriterion];
+const newMax = TIER_MAX_ROLLS[tier] + (tc.baseCounts[cfgViewCriterion] ? STATS_AT_15 : 0);
+if(tc.minPoints > newMax) tc.minPoints = newMax;
+renderConfigModal();
+};
+baseCountBox.addEventListener('click', toggleBase);
+const baseCountLabel = content.querySelector('#cfgBaseCountLabel');
+if(baseCountLabel) baseCountLabel.addEventListener('click', toggleBase);
+}
+const resetEnabledBox = content.querySelector('#cfgResetEnabledBox');
+if(resetEnabledBox){
+const toggleResetEnabled = ()=>{
+captureDraftFromDOM(content);
+tc.resetEnabled = tc.resetEnabled===false ? true : false;
+renderConfigModal();
+};
+resetEnabledBox.addEventListener('click', toggleResetEnabled);
+const resetEnabledLabel = content.querySelector('#cfgResetEnabledLabel');
+if(resetEnabledLabel) resetEnabledLabel.addEventListener('click', toggleResetEnabled);
+}
+content.querySelectorAll('.excl-box:not(#cfgBaseCountBox)').forEach(box=>{
+box.addEventListener('click', ()=>{
+const c = box.dataset.exclCat;
+const kind = box.dataset.exclKind;
+if(kind==='c3'){ tc.resetFlatExcluded[c] = !tc.resetFlatExcluded[c]; }
+else{ tc.flatExcluded[c] = !tc.flatExcluded[c]; }
+renderConfigModal();
+});
+});
+content.querySelectorAll('.cfgMin, .cfgSum, .cfgResetMin').forEach(inp=>{
+inp.addEventListener('blur', ()=>{
+const lo = Number(inp.min), hi = Number(inp.max);
+let v = Number(inp.value);
+if(isNaN(v)) v = lo;
+v = Math.min(hi, Math.max(lo, v));
+inp.value = v;
+});
+});
+const minPointsEl = content.querySelector('#cfgMinPoints');
+if(minPointsEl){
+minPointsEl.addEventListener('blur', ()=>{
+const lo = Number(minPointsEl.min), hi = Number(minPointsEl.max);
+let v = Number(minPointsEl.value);
+if(isNaN(v)) v = lo;
+v = Math.min(hi, Math.max(lo, v));
+minPointsEl.value = v;
+});
+}
+const resetMinPointsEl = content.querySelector('#cfgResetMinPoints');
+if(resetMinPointsEl){
+resetMinPointsEl.addEventListener('blur', ()=>{
+const lo = Number(resetMinPointsEl.min), hi = Number(resetMinPointsEl.max);
+let v = Number(resetMinPointsEl.value);
+if(isNaN(v)) v = lo;
+v = Math.min(hi, Math.max(lo, v));
+resetMinPointsEl.value = v;
+});
+}
+document.getElementById('cfgSaveBtn').addEventListener('click', ()=>{
+captureDraftFromDOM(content);
+CONFIG = JSON.parse(JSON.stringify(cfgDraft));
+localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(CONFIG));
+invalidateDecisionCache();
+cfgDraft = null;
+document.getElementById('configOverlay').classList.remove('open');
+if(parsedItems.length) requestAnimationFrame(render);
+});
+}
+document.getElementById('openConfigBtn').addEventListener('click', ()=>{
+cfgDraft = JSON.parse(JSON.stringify(CONFIG));
+cfgViewCriterion = cfgDraft.tiers[cfgDraft.activeTier].activeCriterion;
+renderConfigModal();
+document.getElementById('configOverlay').classList.add('open');
+});
+document.getElementById('closeConfigModal').addEventListener('click', ()=>{
+cfgDraft = null;
+document.getElementById('configOverlay').classList.remove('open');
+});
+document.getElementById('configOverlay').addEventListener('click', (e)=>{
+if(e.target.id==='configOverlay'){ cfgDraft = null; document.getElementById('configOverlay').classList.remove('open'); }
+});
+document.getElementById('overlay').addEventListener('click', (e)=>{
+if(e.target.id==='overlay') document.getElementById('overlay').classList.remove('open');
+});
+const ARCH_SLOTS = ['weapon','helm','armor','neck','ring','boot'];
+const ARCH_FIXED_MAIN = {weapon:'Attack', helm:'Health', armor:'Defense'};
+const ARCH_VARIABLE_SLOTS = ['neck','ring','boot'];
+const ARCH_STAT_ORDER = ['AttackPercent','CriticalHitChancePercent','CriticalHitDamagePercent','Speed','HealthPercent','DefensePercent','EffectivenessPercent','EffectResistancePercent','Attack','Health','Defense'];
+const ARCH_ALL_STATS = ARCH_STAT_ORDER.slice();
+function renderQsfMainChips(){
+const box = document.getElementById('qsfMainChips');
+box.innerHTML = quickMainStatFilter.map((s,i)=>`
+<div class="qsf-chip" data-idx="${i}">${TYPE_LABEL[s]||s}<span class="x" data-idx="${i}">✕</span></div>
+`).join('');
+box.querySelectorAll('.x').forEach(x=>{
+x.addEventListener('click', ()=>{
+quickMainStatFilter.splice(Number(x.dataset.idx),1);
+renderQsfMainChips();
+renderQsfChips();
+if(parsedItems.length) render();
+});
+});
+}
+function openQsfMainMenu(){
+const menu = document.getElementById('qsfMainMenu');
+const avail = ARCH_STAT_ORDER.filter(s=>!quickMainStatFilter.includes(s));
+if(!avail.length){ menu.classList.remove('open'); return; }
+menu.innerHTML = avail.map(s=>`<div data-stat="${s}">${TYPE_LABEL[s]||s}</div>`).join('');
+const r = document.getElementById('qsfMainAdd').getBoundingClientRect();
+menu.style.top = (r.bottom + window.scrollY + 4) + 'px';
+menu.style.left = (r.left + window.scrollX) + 'px';
+menu.classList.add('open');
+menu.querySelectorAll('div').forEach(d=>{
+d.addEventListener('click', ()=>{
+quickMainStatFilter.push(d.dataset.stat);
+menu.classList.remove('open');
+renderQsfMainChips();
+renderQsfChips();
+if(parsedItems.length) render();
+});
+});
+}
+document.getElementById('qsfMainAdd').addEventListener('click', (ev)=>{ ev.stopPropagation(); openQsfMainMenu(); });
+document.getElementById('qsfMainClear').addEventListener('click', ()=>{
+quickMainStatFilter = [];
+renderQsfMainChips();
+renderQsfChips();
+if(parsedItems.length) render();
+});
+renderQsfMainChips();
+const ARCH_SLOT_SUBSTATS = {
+weapon: ARCH_STAT_ORDER.filter(st=>['Health','HealthPercent','AttackPercent','Speed','CriticalHitChancePercent','CriticalHitDamagePercent','EffectResistancePercent','EffectivenessPercent'].includes(st)),
+helm:   ARCH_STAT_ORDER.filter(st=>['HealthPercent','Attack','AttackPercent','Defense','DefensePercent','Speed','CriticalHitChancePercent','CriticalHitDamagePercent','EffectResistancePercent','EffectivenessPercent'].includes(st)),
+armor:  ARCH_STAT_ORDER.filter(st=>['Health','HealthPercent','DefensePercent','Speed','CriticalHitChancePercent','CriticalHitDamagePercent','EffectResistancePercent','EffectivenessPercent'].includes(st)),
+boot:   ARCH_STAT_ORDER.slice(),
+neck:   ARCH_STAT_ORDER.slice(),
+ring:   ARCH_STAT_ORDER.slice()
+};
+const ARCH_MAINSTAT_OPTIONS = {
+neck: ['CriticalHitDamagePercent','CriticalHitChancePercent','AttackPercent','HealthPercent','DefensePercent','Attack','Health','Defense'],
+ring: ['AttackPercent','HealthPercent','DefensePercent','EffectivenessPercent','EffectResistancePercent','Attack','Health','Defense'],
+boot: ['Speed','AttackPercent','HealthPercent','DefensePercent','Attack','Health','Defense']
+};
+const ARCH_MAX_SUBSTATS = 4;
+let archetypes = [];
+try{ archetypes = JSON.parse(localStorage.getItem(STORAGE_KEYS.ARCHETYPES) || '[]'); }catch(e){ archetypes = []; }
+function saveArchetypesLS(){
+try{ localStorage.setItem(STORAGE_KEYS.ARCHETYPES, JSON.stringify(archetypes)); }catch(e){}
+}
+function matchQuickStats(p, filters){
+if(!filters.length) return true;
+return filters.every(f=>{
+if(f.stat===p.mainType){
+return quickMainStatFilter.includes(f.stat);
+}
+const s = p.substats && p.substats.find(x=>x.type===f.stat);
+if(!s) return false;
+if(f.min==='' || f.min===undefined || f.min===null) return true;
+return s.value >= Number(f.min);
+});
+}
+function matchGearToArchetype(p, arch){
+const slotDef = arch.slots[p.slot];
+if(!slotDef || !slotDef.substats || slotDef.substats.length===0) return false;
+const gSub = new Set(p.substats.map(s=>s.type));
+const need = slotDef.substats.filter(st=>st!==p.mainType);
+if(arch.minSubstats){
+const matchedCount = need.filter(st=>gSub.has(st)).length;
+if(matchedCount < arch.minSubstats) return false;
+} else {
+for(const st of need){ if(!gSub.has(st)) return false; }
+}
+if(ARCH_VARIABLE_SLOTS.includes(p.slot) && slotDef.mainstats && slotDef.mainstats.length>0){
+if(!slotDef.mainstats.includes(p.mainType)) return false;
+}
+if(arch.type==='set' && arch.set){
+if(p.set !== arch.set) return false;
+}
+if(arch.type==='character' && arch.character){
+if((p.heroName||'').trim().toLowerCase() !== arch.character.trim().toLowerCase()) return false;
+}
+return true;
+}
+function buildArchCard(p, matches){
+const isMatch = matches.length>0;
+const otherworld = isOtherworldRaw(p.raw);
+const card = document.createElement('div');
+card.className = `card rank-${p.rank}${otherworld?' otherworld':''}`;
+let controlHtml;
+if(isMatch){
+const names = matches.map(m=>m.name).join(', ');
+controlHtml = `<span class="decision keep" title="${names.replace(/"/g,'&quot;')}">${names}</span>`;
+} else {
+controlHtml = `<button type="button" class="decision sell clickable" data-action="sell" data-key="${encodeURIComponent(p.key)}" title="Mark as already sold">SELL</button>`;
+}
+card.innerHTML = `
+<div class="card-top">
+<div class="icon-frame">
+<div class="icon-wrap${otherworld?' otherworld':''}">${SLOT_ICON[p.slot]||'❔'}</div>
+<span class="lvl-badge">${p.level}</span>
+</div>
+<div class="title-block">
+<div class="rank-line">${otherworld?'<span class="otherworld-tag">Otherworldly</span>':''}${p.rank}</div>
+<div class="slot-line">${SLOT_LABEL[p.slot]||p.slot}</div>
+<div class="gear-line">${setLabel(p.set)}</div>
+</div>
+</div>
+<div class="main-stat"><span>${TYPE_LABEL[p.mainType]||p.mainType}</span><span>${p.mainValue}${PCT_TYPES.has(p.mainType)?'%':''}</span></div>
+<div class="substats">
+${p.substats.map(s=>{
+const mejoraCount = (s.rolls||1)-1;
+const countTxt = mejoraCount>0 ? ` <span class="roll-count">(${mejoraCount})</span>` : '';
+return `<div class="substat-row ${s.modified?'mod':''}"><span>${TYPE_LABEL[s.type]||s.type}${countTxt}</span><span class="sv">${s.value}${PCT_TYPES.has(s.type)?'%':''}</span></div>`;
+}).join('')}
+</div>
+<div class="footer-row" style="justify-content:space-between;align-items:center;">
+<span class="hero-name">${p.heroName||''}</span>
+<div class="footer-actions">${controlHtml}</div>
+</div>
+`;
+card.addEventListener('click', ()=>{
+if(isUnidentifiedRaw(p.raw)){
+openEditModal(p.raw);
+return;
+}
+const d = isMatch
+? {label:'KEEP', cls:'keep', reason:null}
+: {label:'SELL', cls:'sell', reason:null};
+openModal(p, d, Number(document.getElementById('speedThreshold').value)||0);
+});
+const actionBtn = card.querySelector('[data-action]');
+if(actionBtn){
+actionBtn.addEventListener('click', (ev)=>{
+ev.stopPropagation();
+markSold(decodeURIComponent(actionBtn.dataset.key));
+});
+}
+return card;
+}
+function parseItemBasic(item){
+const equippedId = item.ingameEquippedId;
+const heroName = (equippedId && equippedId!=='undefined') ? (heroNameById[equippedId]||heroNameById[Number(equippedId)]||null) : null;
+const op = (item.op||[]).slice(1);
+const cKeys = new Set(op.filter(e=>e.length>2 && e[2]==='c').map(e=>e[0]));
+return {
+raw:item,
+key: itemKey(item),
+heroName,
+slot:resolveSlot(item), rank:item.rank, level:item.level, set:item.set, enhance:item.enhance,
+mainType:(item.main||{}).type, mainValue:(item.main||{}).value,
+substats:(item.substats||[]).map(s=>({type:s.type, value:s.value, rolls:s.rolls, modified:s.modified})),
+hasConversion: cKeys.size>0
+};
+}
+function renderArchetypeView(){
+const grid = document.getElementById('grid');
+grid.innerHTML = '';
+grid.classList.remove('hero-view');
+document.getElementById('slotTabs').style.display = (parsedItems.length || discardedItems.length) ? 'flex' : 'none';
+const filterVal = document.getElementById('filterSelect').value;
+const setVal = document.getElementById('setSelect').value;
+const rankVal = document.getElementById('rankSelect').value;
+const levelVal = document.getElementById('levelSelect').value;
+const convVal = document.getElementById('convSelect').value;
+const sortVal = document.getElementById('sortSelect').value;
+const showingSold = filterVal==='sold';
+document.getElementById('soldToolbar').style.display = showingSold ? 'flex' : 'none';
+const fullInventory = parsedItems.concat(discardedItems.map(parseItemBasic));
+let list = showingSold
+? fullInventory.filter(p=>soldIds.has(p.key))
+: fullInventory.filter(p=>!soldIds.has(p.key));
+if(activeSlot!=='all') list = list.filter(p=>p.slot===activeSlot);
+if(setVal!=='all') list = list.filter(p=>p.set===setVal);
+list = list.filter(p=>rankMatches(rankVal, p.raw));
+if(levelVal!=='all') list = list.filter(p=>String(p.level)===levelVal);
+if(convVal==='yes') list = list.filter(p=>p.hasConversion);
+if(convVal==='no') list = list.filter(p=>!p.hasConversion);
+const archVal = document.getElementById('archFilterSelect').value;
+if(archVal==='__unmatched__'){
+list = list.filter(p=>archetypes.every(a=>!matchGearToArchetype(p,a)));
+}else if(archVal!=='all'){
+const arch = archetypes.find(a=>String(a.id)===String(archVal));
+if(arch) list = list.filter(p=>matchGearToArchetype(p, arch));
+}
+if(sortVal==='age_new') list.sort((a,b)=>((b.raw.ct||0)-(a.raw.ct||0))||((b.raw.id||0)-(a.raw.id||0)));
+if(sortVal==='age_old') list.sort((a,b)=>((a.raw.ct||0)-(b.raw.ct||0))||((a.raw.id||0)-(b.raw.id||0)));
+let matched = list.map(p=>({p, matches: archetypes.filter(a=>matchGearToArchetype(p,a))}));
+if(filterVal==='keep') matched = matched.filter(x=>x.matches.length>0);
+if(filterVal==='sell') matched = matched.filter(x=>x.matches.length===0);
+let matchCount=0, noMatchCount=0;
+const archFrag = document.createDocumentFragment();
+matched.forEach(({p, matches})=>{
+if(matches.length) matchCount++; else noMatchCount++;
+archFrag.appendChild(buildArchCard(p, matches));
+});
+grid.appendChild(archFrag);
+document.getElementById('sumTotal').textContent = matched.length;
+document.getElementById('sumKeep').textContent = matchCount;
+document.getElementById('sumSell').textContent = noMatchCount;
+document.getElementById('sumReset').textContent = 0;
+const soldEvaluated = parsedItems.filter(p=>soldIds.has(p.key)).length;
+const soldDiscarded = discardedItems.filter(it=>soldIds.has(itemKey(it))).length;
+document.getElementById('sumSold').textContent = soldEvaluated + soldDiscarded;
+document.getElementById('sumSkipped').textContent = 0;
+}
+const aqListOverlay = document.getElementById('aqListOverlay');
+const aqEditorOverlay = document.getElementById('aqEditorOverlay');
+let aqEditingId = null;
+let aqCurrentSlotData = {};
+let aqLayoutMode = localStorage.getItem(STORAGE_KEYS.ARCH_LAYOUT_MODE) || 'classic';
+let aqActiveTabSlot = ARCH_SLOTS[0];
+(function aqPopulateSetSelect(){
+const sel = document.getElementById('aqSet');
+Object.keys(SET_LABEL).forEach(s=>{
+const o = document.createElement('option');
+o.value = s; o.textContent = setLabel(s);
+sel.appendChild(o);
+});
+})();
+document.getElementById('openArqsBtn').addEventListener('click', ()=>{
+aqRenderList();
+aqListOverlay.classList.add('open');
+});
+document.getElementById('aqCloseList').addEventListener('click', ()=> aqListOverlay.classList.remove('open'));
+aqListOverlay.addEventListener('click', (e)=>{ if(e.target.id==='aqListOverlay') aqListOverlay.classList.remove('open'); });
+function aqRenderList(){
+const list = document.getElementById('aqList');
+list.innerHTML = '';
+if(archetypes.length===0){
+list.innerHTML = '<p style="color:var(--text-dim);font-size:12px;">No archetypes yet. Create the first one.</p>';
+return;
+}
+archetypes.forEach(a=>{
+const div = document.createElement('div');
+div.className = 'aq-card';
+const typeLabel = a.type==='general' ? 'General' : (a.type==='set' ? `Set: ${setLabel(a.set)}` : `Character: ${a.character||''}`);
+const minLabel = a.minSubstats ? ` · Minimum ${a.minSubstats} stats per piece` : '';
+let slotsHtml = '';
+ARCH_SLOTS.forEach(s=>{
+const sd = a.slots[s];
+if(sd && sd.substats && sd.substats.length){
+const subsTxt = sd.substats.map(x=>TYPE_LABEL[x]||x).join(', ');
+const mainTxt = (ARCH_VARIABLE_SLOTS.includes(s) && sd.mainstats && sd.mainstats.length) ? ` | Main: ${sd.mainstats.map(x=>TYPE_LABEL[x]||x).join('/')}` : '';
+slotsHtml += `<div class="aq-slot"><b>${SLOT_LABEL[s]}:</b>${subsTxt}${mainTxt}</div>`;
+}
+});
+div.innerHTML = `
+<h3>${a.name}</h3>
+<div class="aq-meta">${typeLabel}${minLabel}</div>
+${slotsHtml}
+<div class="aq-actions">
+<button class="aq-btn small secondary" data-aq-edit="${a.id}">Edit</button>
+<button class="aq-btn small secondary" data-aq-dup="${a.id}">Duplicate</button>
+${a.type==='set' ? `<button class="aq-btn small secondary" data-aq-multiset="${a.id}">→ Other sets</button>` : ''}
+<button class="aq-btn small secondary" data-aq-del="${a.id}">Delete</button>
+</div>
+`;
+list.appendChild(div);
+});
+list.querySelectorAll('[data-aq-edit]').forEach(btn=>btn.addEventListener('click', ()=> aqOpenEditor(btn.dataset.aqEdit)));
+list.querySelectorAll('[data-aq-dup]').forEach(btn=>btn.addEventListener('click', ()=> aqDuplicate(btn.dataset.aqDup)));
+list.querySelectorAll('[data-aq-del]').forEach(btn=>btn.addEventListener('click', ()=> aqDelete(btn.dataset.aqDel)));
+list.querySelectorAll('[data-aq-multiset]').forEach(btn=>btn.addEventListener('click', (e)=> aqOpenMultisetPopover(e.currentTarget, btn.dataset.aqMultiset)));
+}
+let aqMultisetPopoverEl = null;
+function aqCloseMultisetPopover(){
+if(aqMultisetPopoverEl){ aqMultisetPopoverEl.remove(); aqMultisetPopoverEl = null; }
+document.removeEventListener('click', aqMultisetOutsideClick, true);
+}
+function aqMultisetOutsideClick(e){
+if(aqMultisetPopoverEl && !aqMultisetPopoverEl.contains(e.target)) aqCloseMultisetPopover();
+}
+function aqOpenMultisetPopover(anchorBtn, id){
+aqCloseMultisetPopover();
+const arch = archetypes.find(a=>a.id===id);
+if(!arch) return;
+const baseName = arch.name;
+const usedSets = new Set(
+archetypes.filter(a=>a.type==='set' && a.name===baseName).map(a=>a.set)
+);
+const availableSets = Object.keys(SET_LABEL).filter(s=>!usedSets.has(s));
+const pop = document.createElement('div');
+pop.className = 'aq-multiset-popover';
+aqMultisetPopoverEl = pop;
+if(availableSets.length===0){
+pop.innerHTML = `<div class="aq-multiset-empty">"${baseName}" already exists for all sets.</div>`;
+} else {
+pop.innerHTML = `
+<div class="aq-multiset-title">Clone "${baseName}" to:</div>
+<div class="aq-multiset-chips"></div>
+<div class="aq-multiset-actions">
+<button type="button" class="aq-btn small secondary" data-ms-cancel>Cancel</button>
+<button type="button" class="aq-btn small" data-ms-confirm>Create</button>
+</div>
+`;
+const chipsWrap = pop.querySelector('.aq-multiset-chips');
+const selected = new Set();
+availableSets.forEach(s=>{
+const chip = document.createElement('span');
+chip.className = 'aq-stat-chip';
+chip.textContent = setLabel(s);
+chip.addEventListener('click', ()=>{
+if(selected.has(s)){ selected.delete(s); chip.classList.remove('on'); }
+else{ selected.add(s); chip.classList.add('on'); }
+});
+chipsWrap.appendChild(chip);
+});
+pop.querySelector('[data-ms-cancel]').addEventListener('click', aqCloseMultisetPopover);
+pop.querySelector('[data-ms-confirm]').addEventListener('click', ()=>{
+if(selected.size===0){ aqCloseMultisetPopover(); return; }
+selected.forEach(s=>{
+const copy = JSON.parse(JSON.stringify(arch));
+copy.id = 'a'+Date.now()+'_'+s;
+copy.set = s;
+archetypes.push(copy);
+});
+saveArchetypesLS();
+aqCloseMultisetPopover();
+aqRenderList();
+if(parsedItems.length) requestAnimationFrame(render);
+});
+}
+document.body.appendChild(pop);
+const r = anchorBtn.getBoundingClientRect();
+const popW = 260;
+let left = r.left;
+if(left + popW > window.innerWidth - 12) left = window.innerWidth - popW - 12;
+pop.style.left = Math.max(12, left) + 'px';
+pop.style.top = (r.bottom + 6) + 'px';
+setTimeout(()=> document.addEventListener('click', aqMultisetOutsideClick, true), 0);
+}
+function aqDuplicate(id){
+const arch = archetypes.find(a=>a.id===id);
+if(!arch) return;
+const copy = JSON.parse(JSON.stringify(arch));
+copy.id = 'a'+Date.now();
+copy.name = arch.name + ' (copia)';
+archetypes.push(copy);
+saveArchetypesLS();
+aqRenderList();
+if(parsedItems.length) requestAnimationFrame(render);
+}
+function aqDelete(id){
+const arch = archetypes.find(a=>a.id===id);
+if(!arch) return;
+if(!confirm(`Delete archetype "${arch.name}"?`)) return;
+archetypes = archetypes.filter(a=>a.id!==id);
+saveArchetypesLS();
+aqRenderList();
+if(parsedItems.length) requestAnimationFrame(render);
+}
+document.getElementById('aqNewBtn').addEventListener('click', ()=> aqOpenEditor(null));
+document.getElementById('aqCloseEditor').addEventListener('click', ()=> aqEditorOverlay.classList.remove('open'));
+document.getElementById('aqCancelBtn').addEventListener('click', ()=> aqEditorOverlay.classList.remove('open'));
+aqEditorOverlay.addEventListener('click', (e)=>{ if(e.target.id==='aqEditorOverlay') aqEditorOverlay.classList.remove('open'); });
+document.getElementById('aqType').addEventListener('change', e=>{
+document.getElementById('aqSetField').style.display = e.target.value==='set' ? 'block':'none';
+document.getElementById('aqCharField').style.display = e.target.value==='character' ? 'block':'none';
+});
+function aqHasGlobalMin(){
+const v = parseInt(document.getElementById('aqMinSubstats').value, 10);
+return !isNaN(v) && v>=1;
+}
+function aqReflectSelections(container){
+ARCH_SLOTS.forEach(slot=>{
+aqCurrentSlotData[slot].substats.forEach(st=>{
+const el = container.querySelector(`[data-slot="${slot}"][data-role="substats"] [data-stat="${st}"]`);
+if(el) el.classList.add('on');
+});
+if(ARCH_VARIABLE_SLOTS.includes(slot)){
+aqCurrentSlotData[slot].mainstats.forEach(st=>{
+const el = container.querySelector(`[data-slot="${slot}"][data-role="mainstats"] [data-stat="${st}"]`);
+if(el) el.classList.add('on');
+});
+}
+});
+}
+function aqRenderActiveLayout(){
+const classicBtn = document.getElementById('aqLayoutClassicBtn');
+const tabsBtn = document.getElementById('aqLayoutTabsBtn');
+const classicContainer = document.getElementById('aqSlotEditors');
+const tabsContainer = document.getElementById('aqSlotEditorsTabs');
+classicBtn.classList.toggle('active', aqLayoutMode==='classic');
+tabsBtn.classList.toggle('active', aqLayoutMode==='tabs');
+if(aqLayoutMode==='classic'){
+tabsContainer.classList.remove('active');
+tabsContainer.innerHTML = '';
+classicContainer.style.display = 'grid';
+aqBuildSlotEditors();
+aqReflectSelections(classicContainer);
+} else {
+classicContainer.style.display = 'none';
+classicContainer.innerHTML = '';
+tabsContainer.classList.add('active');
+aqBuildSlotEditorsTabs();
+aqReflectSelections(tabsContainer);
+}
+}
+document.getElementById('aqLayoutClassicBtn').addEventListener('click', ()=>{
+aqLayoutMode = 'classic'; localStorage.setItem(STORAGE_KEYS.ARCH_LAYOUT_MODE, aqLayoutMode); aqRenderActiveLayout();
+});
+document.getElementById('aqLayoutTabsBtn').addEventListener('click', ()=>{
+aqLayoutMode = 'tabs'; localStorage.setItem(STORAGE_KEYS.ARCH_LAYOUT_MODE, aqLayoutMode); aqRenderActiveLayout();
+});
+function aqBuildSlotEditors(){
+const container = document.getElementById('aqSlotEditors');
+container.innerHTML = '';
+ARCH_SLOTS.forEach(slot=>{
+const isVariable = ARCH_VARIABLE_SLOTS.includes(slot);
+const wrap = document.createElement('div');
+wrap.className = 'aq-slot-editor';
+wrap.innerHTML = `<h4>${SLOT_LABEL[slot]}</h4>
+${isVariable ? `<div class="aq-mainstat-block"><div class="aq-stat-checks" data-slot="${slot}" data-role="mainstats" style="margin-top:5px;"></div></div>` : ''}
+<div class="aq-stat-checks" data-slot="${slot}" data-role="substats"></div>
+`;
+const subContainer = wrap.querySelector('[data-role="substats"]');
+ARCH_SLOT_SUBSTATS[slot].forEach(st=>{
+const chip = document.createElement('span');
+chip.className = 'aq-stat-chip'; chip.textContent = TYPE_LABEL[st]||st; chip.dataset.stat = st;
+chip.addEventListener('click', ()=>{
+const sel = aqCurrentSlotData[slot].substats;
+const idx = sel.indexOf(st);
+if(idx>=0){ sel.splice(idx,1); chip.classList.remove('on'); }
+else{
+if(sel.length>=ARCH_MAX_SUBSTATS && !aqHasGlobalMin()){ alert(`Máximo ${ARCH_MAX_SUBSTATS} substats por pieza (poné un mínimo global para levantar el límite).`); return; }
+sel.push(st); chip.classList.add('on');
+}
+});
+subContainer.appendChild(chip);
+});
+if(isVariable){
+const mainContainer = wrap.querySelector('[data-role="mainstats"]');
+ARCH_MAINSTAT_OPTIONS[slot].forEach(st=>{
+const chip = document.createElement('span');
+chip.className = 'aq-stat-chip main-chip'; chip.textContent = TYPE_LABEL[st]||st; chip.dataset.stat = st;
+chip.addEventListener('click', ()=>{
+const sel = aqCurrentSlotData[slot].mainstats;
+const idx = sel.indexOf(st);
+if(idx>=0){ sel.splice(idx,1); chip.classList.remove('on'); }
+else{ sel.push(st); chip.classList.add('on'); }
+});
+mainContainer.appendChild(chip);
+});
+}
+container.appendChild(wrap);
+});
+}
+function aqBuildSlotEditorsTabs(){
+const container = document.getElementById('aqSlotEditorsTabs');
+container.innerHTML = '';
+const sidebar = document.createElement('div');
+sidebar.className = 'aq-tabs-sidebar';
+const content = document.createElement('div');
+content.className = 'aq-tabs-content';
+if(!ARCH_SLOTS.includes(aqActiveTabSlot)) aqActiveTabSlot = ARCH_SLOTS[0];
+ARCH_SLOTS.forEach(slot=>{
+const btn = document.createElement('button');
+btn.type = 'button';
+btn.className = 'aq-tabs-sidebar-btn' + (slot===aqActiveTabSlot?' active':'');
+btn.textContent = SLOT_LABEL[slot];
+btn.addEventListener('click', ()=>{
+aqActiveTabSlot = slot;
+sidebar.querySelectorAll('.aq-tabs-sidebar-btn').forEach(b=>b.classList.remove('active'));
+btn.classList.add('active');
+content.querySelectorAll('.aq-tabs-pane').forEach(p=>p.classList.remove('active'));
+content.querySelector(`#aq-tabpane-${slot}`).classList.add('active');
+});
+sidebar.appendChild(btn);
+const pane = document.createElement('div');
+pane.className = 'aq-tabs-pane' + (slot===aqActiveTabSlot?' active':'');
+pane.id = `aq-tabpane-${slot}`;
+const isVariable = ARCH_VARIABLE_SLOTS.includes(slot);
+pane.innerHTML = `<h3>Configurar ${SLOT_LABEL[slot]}</h3>
+${isVariable ? `<div class="aq-tabs-mainstat-label">Mainstats</div><div class="aq-pill-grid" data-slot="${slot}" data-role="mainstats"></div><div class="aq-tabs-mainstat-label" style="margin-top:18px;">Substats</div>` : ''}
+<div class="aq-pill-grid" data-slot="${slot}" data-role="substats"></div>
+`;
+const subContainer = pane.querySelector('[data-role="substats"]');
+ARCH_SLOT_SUBSTATS[slot].forEach(st=>{
+const pill = document.createElement('span');
+pill.className = 'aq-stat-chip'; pill.textContent = TYPE_LABEL[st]||st; pill.dataset.stat = st;
+pill.addEventListener('click', ()=>{
+const sel = aqCurrentSlotData[slot].substats;
+const idx = sel.indexOf(st);
+if(idx>=0){ sel.splice(idx,1); pill.classList.remove('on'); }
+else{
+if(sel.length>=ARCH_MAX_SUBSTATS && !aqHasGlobalMin()){ alert(`Máximo ${ARCH_MAX_SUBSTATS} substats por pieza (poné un mínimo global para levantar el límite).`); return; }
+sel.push(st); pill.classList.add('on');
+}
+});
+subContainer.appendChild(pill);
+});
+if(isVariable){
+const mainContainer = pane.querySelector('[data-role="mainstats"]');
+ARCH_MAINSTAT_OPTIONS[slot].forEach(st=>{
+const pill = document.createElement('span');
+pill.className = 'aq-stat-chip main-chip'; pill.textContent = TYPE_LABEL[st]||st; pill.dataset.stat = st;
+pill.addEventListener('click', ()=>{
+const sel = aqCurrentSlotData[slot].mainstats;
+const idx = sel.indexOf(st);
+if(idx>=0){ sel.splice(idx,1); pill.classList.remove('on'); }
+else{ sel.push(st); pill.classList.add('on'); }
+});
+mainContainer.appendChild(pill);
+});
+}
+content.appendChild(pane);
+});
+container.appendChild(sidebar);
+container.appendChild(content);
+}
+function aqOpenEditor(id){
+aqEditingId = id;
+const isNew = id===null;
+document.getElementById('aqEditorTitle').textContent = isNew ? 'New archetype' : 'Edit archetype';
+document.getElementById('aqDeleteBtn').style.display = isNew ? 'none' : 'inline-block';
+const arch = isNew ? null : archetypes.find(a=>a.id===id);
+document.getElementById('aqName').value = arch ? arch.name : '';
+document.getElementById('aqType').value = arch ? arch.type : 'general';
+const setKeys = Object.keys(SET_LABEL);
+document.getElementById('aqSet').value = (arch && arch.set) ? arch.set : setKeys[0];
+document.getElementById('aqChar').value = (arch && arch.character) ? arch.character : '';
+document.getElementById('aqSetField').style.display = (arch && arch.type==='set') ? 'block':'none';
+document.getElementById('aqCharField').style.display = (arch && arch.type==='character') ? 'block':'none';
+document.getElementById('aqMinSubstats').value = (arch && arch.minSubstats) ? arch.minSubstats : '';
+aqCurrentSlotData = {};
+ARCH_SLOTS.forEach(s=>{ aqCurrentSlotData[s] = {substats:[], mainstats:[]}; });
+if(arch){
+ARCH_SLOTS.forEach(s=>{
+if(arch.slots[s]){
+aqCurrentSlotData[s].substats = (arch.slots[s].substats||[]).slice();
+aqCurrentSlotData[s].mainstats = (arch.slots[s].mainstats||[]).slice();
+}
+});
+}
+aqActiveTabSlot = ARCH_SLOTS[0];
+aqRenderActiveLayout();
+aqListOverlay.classList.remove('open');
+aqEditorOverlay.classList.add('open');
+}
+document.getElementById('aqSaveBtn').addEventListener('click', ()=>{
+const name = document.getElementById('aqName').value.trim();
+if(!name){ alert('Poné un nombre.'); return; }
+const type = document.getElementById('aqType').value;
+const set = type==='set' ? document.getElementById('aqSet').value : null;
+const character = type==='character' ? document.getElementById('aqChar').value.trim() : null;
+const minRaw = parseInt(document.getElementById('aqMinSubstats').value, 10);
+const minSubstats = (!isNaN(minRaw) && minRaw>=1) ? Math.min(minRaw, ARCH_MAX_SUBSTATS) : null;
+const slots = {};
+ARCH_SLOTS.forEach(s=>{ slots[s] = {substats: aqCurrentSlotData[s].substats.slice(), mainstats: aqCurrentSlotData[s].mainstats.slice()}; });
+if(aqEditingId){
+const arch = archetypes.find(a=>a.id===aqEditingId);
+Object.assign(arch, {name, type, set, character, minSubstats, slots});
+} else {
+archetypes.push({id:'a'+Date.now(), name, type, set, character, minSubstats, slots});
+}
+saveArchetypesLS();
+aqEditorOverlay.classList.remove('open');
+aqListOverlay.classList.add('open');
+aqRenderList();
+if(parsedItems.length) requestAnimationFrame(render);
+});
+document.getElementById('aqDeleteBtn').addEventListener('click', ()=>{
+if(!aqEditingId) return;
+const arch = archetypes.find(a=>a.id===aqEditingId);
+if(!confirm(`Delete archetype "${arch?arch.name:''}"?`)) return;
+archetypes = archetypes.filter(a=>a.id!==aqEditingId);
+saveArchetypesLS();
+aqEditorOverlay.classList.remove('open');
+aqListOverlay.classList.add('open');
+aqRenderList();
+if(parsedItems.length) requestAnimationFrame(render);
+});
+</script>
+<style>
+.ie-rows{display:flex;flex-direction:column;gap:8px;margin-top:2px;}
+.ie-row{
+display:flex;align-items:center;justify-content:space-between;gap:10px;
+background:var(--cfg-card);border:1px solid var(--cfg-line);border-radius:8px;
+padding:10px 12px;
+}
+.ie-name{font-size:13px;color:var(--text);}
+.ie-name .ie-sub{font-size:11px;color:var(--text-dim);font-weight:400;display:block;}
+.ie-actions{display:flex;gap:6px;}
+.ie-btn{
+position:relative;overflow:hidden;
+background:var(--hc0);border:1px solid var(--cfg-line);color:var(--text-dim);
+padding:6px 12px;border-radius:6px;cursor:pointer;font-size:11.5px;font-weight:600;
+white-space:nowrap;
+}
+.ie-btn:hover{border-color:var(--gold);color:var(--text);}
+.ie-import input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.ie-msg{font-size:11.5px;margin-top:10px;min-height:14px;color:var(--keep);}
+.ie-msg.err{color:var(--sell);}
+#ieFab{
+position:fixed;bottom:22px;right:80px;z-index:9999;
+width:48px;height:48px;border-radius:50%;
+background:linear-gradient(180deg,var(--gold-bright),var(--gold));
+border:2px solid var(--gold-dim);color:#2a1608;
+display:flex;align-items:center;justify-content:center;
+cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,0.5);
+font-size:20px;user-select:none;transition:transform .12s;
+}
+#ieFab:hover{transform:scale(1.08);}
+#iePanel{
+position:fixed;bottom:80px;right:80px;z-index:9999;
+width:300px;max-width:calc(100vw - 32px);
+background:linear-gradient(180deg, var(--panel-2), var(--bg-1));
+border:1px solid var(--line);border-radius:14px;
+padding:16px;box-shadow:0 20px 50px rgba(0,0,0,0.55);
+display:none;max-height:calc(100vh - 110px);overflow-y:auto;
+}
+#iePanel.open{display:block;}
+#iePanel h3{margin:0 0 12px;font-size:14px;color:var(--gold-bright);}
+#iePanel .ie-close{
+position:absolute;top:12px;right:14px;cursor:pointer;color:var(--text-dim);font-size:14px;
+}
+#paletteFab{
+position:fixed;bottom:22px;right:22px;z-index:9999;
+width:48px;height:48px;border-radius:50%;
+background:linear-gradient(180deg,var(--gold-bright),var(--gold));
+border:2px solid var(--gold-dim);color:#2a1608;
+display:flex;align-items:center;justify-content:center;
+cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,0.5);
+font-size:20px;user-select:none;transition:transform .12s;
+}
+#paletteFab:hover{transform:scale(1.08);}
+#palettePanel{
+position:fixed;bottom:80px;right:22px;z-index:9999;
+width:300px;max-width:calc(100vw - 32px);
+background:linear-gradient(180deg, var(--panel-2), var(--bg-1));
+border:1px solid var(--line);border-radius:14px;
+padding:16px;box-shadow:0 20px 50px rgba(0,0,0,0.55);
+display:none;max-height:calc(100vh - 110px);overflow-y:auto;
+}
+#palettePanel.open{display:block;}
+#palettePanel h3{
+margin:0 0 4px;font-size:12.5px;letter-spacing:.5px;text-transform:uppercase;
+color:var(--gold-bright);display:flex;align-items:center;justify-content:space-between;
+}
+#palettePanel h3 span.close{cursor:pointer;color:var(--text-dim);font-size:16px;line-height:1;}
+#palettePanel .sub{font-size:10.5px;color:var(--text-dim);margin-bottom:10px;}
+#palettePanel .section-label{font-size:9.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--text-dim);margin:12px 0 6px;}
+#palettePanel .section-label:first-of-type{margin-top:0;}
+#paletteSwatches{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:4px;}
+#paletteSwatches .sw{
+border-radius:7px;border:1px solid var(--line);cursor:pointer;overflow:hidden;
+display:flex;flex-direction:column;transition:transform .08s;
+}
+#paletteSwatches .sw:hover{transform:translateY(-1px);}
+#paletteSwatches .sw .swc{height:22px;}
+#paletteSwatches .sw .swl{font-size:8.5px;text-align:center;padding:2px 0;background:rgba(0,0,0,0.35);color:var(--text-dim);font-family:monospace;}
+#paletteCopiedMsg{font-size:10px;color:var(--keep);height:12px;margin-bottom:6px;text-align:right;}
+#familyRow{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+#familyRow button{
+flex:1;min-width:60px;padding:6px 4px;border-radius:7px;border:1px solid var(--line);
+background:var(--hc0);color:var(--text-dim);font-size:10.5px;font-weight:700;cursor:pointer;
+}
+#familyRow button.active{
+background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#2a1608;border-color:var(--gold-bright);
+}
+#customHexRow{display:flex;gap:6px;margin-bottom:10px;}
+#customHexInput{
+flex:1;min-width:0;background:var(--hc0);border:1px solid var(--line);color:var(--text);
+border-radius:7px;padding:8px 10px;font-size:12px;font-family:monospace;text-transform:uppercase;
+}
+#customHexInput::placeholder{color:var(--text-dim);text-transform:none;font-family:inherit;}
+#applyHexBtn{
+padding:8px 12px;border-radius:7px;border:1px solid var(--line);background:var(--hc0);
+color:var(--gold-bright);font-weight:700;font-size:12px;cursor:pointer;
+}
+#applyHexBtn:hover{filter:brightness(1.3);}
+#customHexError{font-size:10px;color:var(--sell);min-height:12px;margin:-4px 0 8px;}
+#paletteBtns{display:flex;gap:8px;margin-bottom:4px;}
+#paletteBtns button{
+flex:1;padding:9px 8px;border-radius:8px;border:1px solid var(--line);
+background:var(--hc0);color:var(--text);font-weight:700;font-size:12px;cursor:pointer;
+transition:filter .1s;
+}
+#paletteBtns button:hover{filter:brightness(1.25);}
+#paletteBtns button#randomizeBtn{
+background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#2a1608;border-color:var(--gold-bright);
+}
+#paletteBtns button:disabled{opacity:.35;cursor:not-allowed;filter:none;}
+#favRow{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+#favRow .fav-sw{
+width:26px;height:26px;border-radius:6px;border:1px solid var(--line);cursor:pointer;position:relative;
+}
+#favRow .fav-sw:hover::after{
+content:'✕';position:absolute;top:-6px;right:-6px;width:14px;height:14px;border-radius:50%;
+background:var(--sell-bg);color:var(--sell);font-size:9px;display:flex;align-items:center;justify-content:center;
+}
+#saveFavBtn{
+width:26px;height:26px;border-radius:6px;border:1px dashed var(--line);background:transparent;
+color:var(--gold-bright);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+#saveFavBtn:hover{border-color:var(--gold-bright);}
+#favEmpty{font-size:10px;color:var(--text-dim);}
+.adv-row{margin-bottom:10px;}
+.adv-row label{display:flex;justify-content:space-between;font-size:10.5px;color:var(--text-dim);margin-bottom:3px;}
+.adv-row label span{color:var(--gold-bright);font-weight:700;}
+.adv-row input[type=range]{width:100%;accent-color:var(--gold-bright);}
+#advArrow{display:inline-block;transition:transform .15s;color:var(--text-dim);}
+#advArrow.open{transform:rotate(90deg);}
+@media (max-width:760px){
+#ieFab{bottom:14px;right:68px;width:44px;height:44px;font-size:18px;}
+#paletteFab{bottom:14px;right:14px;width:44px;height:44px;font-size:18px;}
+#iePanel{bottom:64px;right:10px;width:calc(100vw - 20px);max-width:calc(100vw - 20px);}
+#palettePanel{bottom:64px;right:10px;width:calc(100vw - 20px);max-width:calc(100vw - 20px);}
+}
+</style>
+<div id="ieFab" title="Import / Export">💾</div>
+<div id="iePanel">
+<span class="ie-close" id="ieClose">✕</span>
+<h3>Import / Export</h3>
+<div class="ie-rows">
+<div class="ie-row">
+<div class="ie-name">Config<span class="ie-sub">Method 1/2/3 settings</span></div>
+<div class="ie-actions">
+<button type="button" class="ie-btn" data-ie-export="config">Export</button>
+<label class="ie-btn ie-import">Import<input type="file" accept="application/json" data-ie-import="config"></label>
+</div>
+</div>
+<div class="ie-row">
+<div class="ie-name">Archetypes</div>
+<div class="ie-actions">
+<button type="button" class="ie-btn" data-ie-export="archetypes">Export</button>
+<label class="ie-btn ie-import">Import<input type="file" accept="application/json" data-ie-import="archetypes"></label>
+</div>
+</div>
+<div class="ie-row">
+<div class="ie-name">Appearance<span class="ie-sub">Colors &amp; favorites</span></div>
+<div class="ie-actions">
+<button type="button" class="ie-btn" data-ie-export="appearance">Export</button>
+<label class="ie-btn ie-import">Import<input type="file" accept="application/json" data-ie-import="appearance"></label>
+</div>
+</div>
+</div>
+<div id="ieMsg" class="ie-msg"></div>
+</div>
+<div id="paletteFab" title="Change background color">🎨</div>
+<div id="palettePanel">
+<h3>Background <span class="close" id="paletteClose">✕</span></h3>
+<div class="sub">Current colors of the background pack</div>
+<div id="paletteSwatches"></div>
+<div id="paletteCopiedMsg"></div>
+<div class="section-label" id="advToggle" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+<span>Advanced <span id="advArrow">▸</span></span>
+</div>
+<div id="advBody" style="display:none;">
+<div class="adv-row">
+<label>Tono (hue) <span id="hueVal">—</span></label>
+<input type="range" id="hueSlider" min="0" max="360" value="220">
+</div>
+<div class="adv-row">
+<label>Overall darkness <span id="baseLVal">7%</span></label>
+<input type="range" id="baseLSlider" min="3" max="24" value="7">
+</div>
+<div class="adv-row">
+<label>Hue variation between layers <span id="jitterVal">5°</span></label>
+<input type="range" id="jitterSlider" min="0" max="18" value="5">
+</div>
+<div class="adv-row">
+<label>Minimum saturation <span id="satMinVal">12%</span></label>
+<input type="range" id="satMinSlider" min="4" max="60" value="12">
+</div>
+<div class="adv-row">
+<label>Maximum saturation <span id="satMaxVal">38%</span></label>
+<input type="range" id="satMaxSlider" min="4" max="70" value="38">
+</div>
+<div class="adv-row">
+<label>Contrast between layers <span id="contrastVal">100%</span></label>
+<input type="range" id="contrastSlider" min="50" max="170" value="100">
+</div>
+<button id="advResetBtn" style="width:100%;margin-top:4px;padding:6px;border-radius:7px;border:1px solid var(--line);background:var(--hc0);color:var(--text-dim);font-size:10.5px;cursor:pointer;">Reset ranges</button>
+</div>
+<div class="section-label">Color family</div>
+<div id="familyRow">
+<button data-fam="any" class="active">Any</button>
+<button data-fam="warm">Warm</button>
+<button data-fam="cool">Cool</button>
+<button data-fam="neutral">Neutral</button>
+</div>
+<div class="section-label">Use a color as base</div>
+<div id="customHexRow">
+<input id="customHexInput" type="text" maxlength="7" placeholder="#3a2c55">
+<button id="applyHexBtn">Use</button>
+</div>
+<div id="customHexError"></div>
+<div id="paletteBtns">
+<button id="undoBtn" disabled>↩ Undo</button>
+<button id="randomizeBtn">🎲 Randomize</button>
+</div>
+<div class="section-label">Favorites</div>
+<div id="favRow">
+<button id="saveFavBtn" title="Save current palette">★</button>
+</div>
+</div>
+<script>
+(function(){
+const TOKENS = ['--bg-0','--bg-1','--panel','--panel-2','--line','--hc0','--hc1','--hc2','--hc3','--hc4','--grad-r1','--grad-r2','--grad-end'];
+const MAX_FAVS = 6;
+let currentFamily = 'any';
+const DEFAULT_SETTINGS = { satMin:12, satMax:38, contrast:100, baseL:7, jitter:5 };
+function loadSettings(){
+try{
+const s = JSON.parse(localStorage.getItem(STORAGE_KEYS.PALETTE_SETTINGS));
+if(s && typeof s.satMin==='number') return s;
+}catch(e){}
+return {...DEFAULT_SETTINGS};
+}
+let settings = loadSettings();
+function persistSettings(){
+try{ localStorage.setItem(STORAGE_KEYS.PALETTE_SETTINGS, JSON.stringify(settings)); }catch(e){}
+}
+function hsl2hex(h,s,l){
+s/=100; l/=100;
+const k = n => (n + h/30) % 12;
+const a = s * Math.min(l,1-l);
+const f = n => l - a*Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n),1)));
+const toHex = x => Math.round(255*x).toString(16).padStart(2,'0');
+return '#'+toHex(f(0))+toHex(f(8))+toHex(f(4));
+}
+function hex2hsl(hex){
+hex = hex.replace('#','').trim();
+if(hex.length===3){ hex = hex.split('').map(c=>c+c).join(''); }
+if(!/^[0-9a-fA-F]{6}$/.test(hex)) return null;
+const r = parseInt(hex.slice(0,2),16)/255;
+const g = parseInt(hex.slice(2,4),16)/255;
+const b = parseInt(hex.slice(4,6),16)/255;
+const max = Math.max(r,g,b), min = Math.min(r,g,b);
+let h, s, l = (max+min)/2;
+if(max===min){ h=0; s=0; }
+else{
+const d = max-min;
+s = l>0.5 ? d/(2-max-min) : d/(max+min);
+switch(max){
+case r: h = (g-b)/d + (g<b?6:0); break;
+case g: h = (b-r)/d + 2; break;
+default: h = (r-g)/d + 4;
+}
+h *= 60;
+}
+return {h, s:s*100, l:l*100};
+}
+function hueForFamily(fam){
+if(fam==='warm'){
+const ranges = [[-40,60]];
+const r = ranges[0];
+let h = r[0] + Math.random()*(r[1]-r[0]);
+return (h+360)%360;
+}
+if(fam==='cool'){
+return 150 + Math.random()*130;
+}
+return Math.random()*360;
+}
+function satForFamily(fam){
+const lo = Math.min(settings.satMin, settings.satMax);
+const hi = Math.max(settings.satMin, settings.satMax);
+if(fam==='neutral') return lo + Math.random()*Math.min(10, (hi-lo)||10);
+return lo + Math.random()*(hi-lo || 1);
+}
+function buildPackage(hue, sat){
+const jAmt = settings.jitter||0;
+const jitter = () => jAmt<=0 ? 0 : (Math.random()*2*jAmt - jAmt);
+const contrastMult = (settings.contrast||100)/100;
+const baseL = (settings.baseL!=null ? settings.baseL : 7);
+const scaleL = l => Math.max(2, Math.min(92, baseL + (l-baseL)*contrastMult));
+const mk = (l, sOff=0, hOff=0) => hsl2hex(((hue+hOff)+360)%360, Math.max(4, sat+sOff), scaleL(l));
+return {
+'--bg-0':    mk(baseL),
+'--bg-1':    mk(10, 0, jitter()),
+'--panel':   mk(15, 2, jitter()),
+'--panel-2': mk(19, 3, jitter()),
+'--line':    mk(30, -4, jitter()),
+'--hc0':     mk(8,  1, jitter()),
+'--hc1':     mk(19, 3, jitter()),
+'--hc2':     mk(11, 1, jitter()),
+'--hc3':     mk(9,  1, jitter()),
+'--hc4':     mk(9,  0, jitter()),
+'--grad-r1': mk(16, 4, jitter()),
+'--grad-r2': mk(12, 2, jitter()),
+'--grad-end':mk(3),
+};
+}
+function randomPalette(){
+const hue = hueForFamily(currentFamily);
+const sat = satForFamily(currentFamily);
+return buildPackage(hue, sat);
+}
+window.ieApplyPalette = applyPalette;
+function applyPalette(pal){
+const root = document.documentElement.style;
+TOKENS.forEach(t => root.setProperty(t, pal[t]));
+renderSwatches(pal);
+try{ localStorage.setItem(STORAGE_KEYS.PALETTE_CURRENT, JSON.stringify(currentPalette())); }catch(e){}
+}
+function currentPalette(){
+const cs = getComputedStyle(document.documentElement);
+const pal = {};
+TOKENS.forEach(t => pal[t] = cs.getPropertyValue(t).trim());
+return pal;
+}
+function flashCopied(text){
+const el = document.getElementById('paletteCopiedMsg');
+el.textContent = 'Copied: '+text;
+clearTimeout(flashCopied._t);
+flashCopied._t = setTimeout(()=>{ el.textContent=''; }, 1500);
+}
+function renderSwatches(pal){
+const box = document.getElementById('paletteSwatches');
+box.innerHTML = '';
+['--bg-0','--bg-1','--panel','--panel-2','--line','--hc4'].forEach(t=>{
+const wrap = document.createElement('div');
+wrap.className = 'sw';
+const c = document.createElement('div');
+c.className = 'swc';
+c.style.background = pal[t];
+const l = document.createElement('div');
+l.className = 'swl';
+l.textContent = pal[t];
+wrap.appendChild(c); wrap.appendChild(l);
+wrap.title = 'Click to copy '+pal[t];
+wrap.addEventListener('click', ()=>{
+const hex = pal[t];
+if(navigator.clipboard && navigator.clipboard.writeText){
+navigator.clipboard.writeText(hex).then(()=>flashCopied(hex)).catch(()=>flashCopied(hex));
+} else { flashCopied(hex); }
+});
+box.appendChild(wrap);
+});
+}
+let history = [];
+function doRandomize(){
+history.push(currentPalette());
+document.getElementById('undoBtn').disabled = false;
+applyPalette(randomPalette());
+}
+function doUndo(){
+if(!history.length) return;
+const prev = history.pop();
+applyPalette(prev);
+document.getElementById('undoBtn').disabled = history.length === 0;
+}
+function doApplyCustomHex(){
+const input = document.getElementById('customHexInput');
+const errBox = document.getElementById('customHexError');
+const raw = input.value.trim();
+const hsl = hex2hsl(raw);
+if(!hsl){
+errBox.textContent = 'Invalid hex — use format #rrggbb';
+return;
+}
+errBox.textContent = '';
+history.push(currentPalette());
+document.getElementById('undoBtn').disabled = false;
+const lo = Math.min(settings.satMin, settings.satMax), hi = Math.max(settings.satMin, settings.satMax);
+const seedSat = Math.min(hi, Math.max(lo, hsl.s));
+applyPalette(buildPackage(hsl.h, seedSat));
+}
+function refreshAdvUI(){
+document.getElementById('baseLSlider').value = settings.baseL;
+document.getElementById('jitterSlider').value = settings.jitter;
+document.getElementById('satMinSlider').value = settings.satMin;
+document.getElementById('satMaxSlider').value = settings.satMax;
+document.getElementById('contrastSlider').value = settings.contrast;
+document.getElementById('baseLVal').textContent = settings.baseL+'%';
+document.getElementById('jitterVal').textContent = settings.jitter+'°';
+document.getElementById('satMinVal').textContent = settings.satMin+'%';
+document.getElementById('satMaxVal').textContent = settings.satMax+'%';
+document.getElementById('contrastVal').textContent = settings.contrast+'%';
+const cur = currentPaletteHue();
+document.getElementById('hueSlider').value = cur;
+document.getElementById('hueVal').textContent = Math.round(cur)+'°';
+}
+function currentPaletteHue(){
+const hsl = hex2hsl(currentPalette()['--panel']);
+return hsl ? hsl.h : 220;
+}
+document.getElementById('advToggle').addEventListener('click', ()=>{
+const body = document.getElementById('advBody');
+const arrow = document.getElementById('advArrow');
+const open = body.style.display !== 'none';
+body.style.display = open ? 'none' : 'block';
+arrow.classList.toggle('open', !open);
+if(!open) refreshAdvUI();
+});
+let hueDragActive = false;
+const hueSlider = document.getElementById('hueSlider');
+hueSlider.addEventListener('pointerdown', ()=>{
+if(!hueDragActive){
+history.push(currentPalette());
+document.getElementById('undoBtn').disabled = false;
+hueDragActive = true;
+}
+});
+hueSlider.addEventListener('input', (e)=>{
+const hue = parseInt(e.target.value,10);
+document.getElementById('hueVal').textContent = hue+'°';
+const lo = Math.min(settings.satMin, settings.satMax), hi = Math.max(settings.satMin, settings.satMax);
+const sat = (lo+hi)/2;
+const root = document.documentElement.style;
+const pal = buildPackage(hue, sat);
+TOKENS.forEach(t => root.setProperty(t, pal[t]));
+renderSwatches(pal);
+});
+hueSlider.addEventListener('change', ()=>{
+hueDragActive = false;
+try{ localStorage.setItem(STORAGE_KEYS.PALETTE_CURRENT, JSON.stringify(currentPalette())); }catch(e){}
+});
+document.getElementById('baseLSlider').addEventListener('input', (e)=>{
+settings.baseL = parseInt(e.target.value,10);
+document.getElementById('baseLVal').textContent = settings.baseL+'%';
+persistSettings();
+});
+document.getElementById('jitterSlider').addEventListener('input', (e)=>{
+settings.jitter = parseInt(e.target.value,10);
+document.getElementById('jitterVal').textContent = settings.jitter+'°';
+persistSettings();
+});
+document.getElementById('satMinSlider').addEventListener('input', (e)=>{
+settings.satMin = parseInt(e.target.value,10);
+document.getElementById('satMinVal').textContent = settings.satMin+'%';
+persistSettings();
+});
+document.getElementById('satMaxSlider').addEventListener('input', (e)=>{
+settings.satMax = parseInt(e.target.value,10);
+document.getElementById('satMaxVal').textContent = settings.satMax+'%';
+persistSettings();
+});
+document.getElementById('contrastSlider').addEventListener('input', (e)=>{
+settings.contrast = parseInt(e.target.value,10);
+document.getElementById('contrastVal').textContent = settings.contrast+'%';
+persistSettings();
+});
+document.getElementById('advResetBtn').addEventListener('click', ()=>{
+settings = {...DEFAULT_SETTINGS};
+persistSettings();
+refreshAdvUI();
+});
+refreshAdvUI();
+document.querySelectorAll('#familyRow button').forEach(btn=>{
+btn.addEventListener('click', ()=>{
+document.querySelectorAll('#familyRow button').forEach(b=>b.classList.remove('active'));
+btn.classList.add('active');
+currentFamily = btn.getAttribute('data-fam');
+});
+});
+function loadFavs(){
+try{ return JSON.parse(localStorage.getItem(STORAGE_KEYS.PALETTE_FAVS)||'[]'); }catch(e){ return []; }
+}
+function saveFavs(favs){
+try{ localStorage.setItem(STORAGE_KEYS.PALETTE_FAVS, JSON.stringify(favs)); }catch(e){}
+}
+function renderFavs(){
+const row = document.getElementById('favRow');
+const favs = loadFavs();
+row.querySelectorAll('.fav-sw').forEach(n=>n.remove());
+const empty = document.getElementById('favEmpty');
+if(empty) empty.remove();
+if(favs.length===0){
+const e = document.createElement('span');
+e.id='favEmpty'; e.textContent='No favorites yet';
+row.appendChild(e);
+}
+favs.forEach((fav, idx)=>{
+const sw = document.createElement('div');
+sw.className = 'fav-sw';
+sw.style.background = fav['--panel'] || fav['--bg-0'];
+sw.title = 'Apply favorite '+(idx+1)+' (right-click to delete)';
+sw.addEventListener('click', ()=>{
+history.push(currentPalette());
+document.getElementById('undoBtn').disabled = false;
+applyPalette(fav);
+});
+sw.addEventListener('contextmenu', (e)=>{
+e.preventDefault();
+const favs2 = loadFavs();
+favs2.splice(idx,1);
+saveFavs(favs2);
+renderFavs();
+});
+row.insertBefore(sw, document.getElementById('saveFavBtn'));
+});
+}
+document.getElementById('saveFavBtn').addEventListener('click', ()=>{
+const favs = loadFavs();
+if(favs.length >= MAX_FAVS){ favs.shift(); }
+favs.push(currentPalette());
+saveFavs(favs);
+renderFavs();
+});
+document.getElementById('randomizeBtn').addEventListener('click', doRandomize);
+document.getElementById('undoBtn').addEventListener('click', doUndo);
+document.getElementById('applyHexBtn').addEventListener('click', doApplyCustomHex);
+document.getElementById('customHexInput').addEventListener('keydown', (e)=>{
+if(e.key==='Enter') doApplyCustomHex();
+});
+document.getElementById('paletteFab').addEventListener('click', ()=>{
+document.getElementById('palettePanel').classList.toggle('open');
+renderSwatches(currentPalette());
+renderFavs();
+});
+document.getElementById('paletteClose').addEventListener('click', ()=>{
+document.getElementById('palettePanel').classList.remove('open');
+});
+document.querySelectorAll('[data-ie-export]').forEach(btn=>{
+btn.addEventListener('click', ()=> ieExport(btn.dataset.ieExport));
+});
+document.querySelectorAll('[data-ie-import]').forEach(input=>{
+input.addEventListener('change', (e)=>{
+const file = e.target.files[0];
+if(file) ieImport(input.dataset.ieImport, file);
+e.target.value = '';
+});
+});
+document.getElementById('ieFab').addEventListener('click', ()=>{
+document.getElementById('iePanel').classList.toggle('open');
+});
+document.getElementById('ieClose').addEventListener('click', ()=>{
+document.getElementById('iePanel').classList.remove('open');
+});
+(function restoreSavedPalette(){
+try{
+const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.PALETTE_CURRENT));
+if(saved && TOKENS.every(t => typeof saved[t]==='string' && saved[t])){
+const root = document.documentElement.style;
+TOKENS.forEach(t => root.setProperty(t, saved[t]));
+}
+}catch(e){}
+})();
+renderSwatches(currentPalette());
+renderFavs();
+})();
+</script>
+</body>
+</html>
