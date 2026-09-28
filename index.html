@@ -145,6 +145,7 @@ padding:12px 16px;text-align:center;
 .summary .chip.keep .num{color:var(--keep);}
 .summary .chip.sell .num{color:var(--sell);}
 .summary .chip.reset .num{color:var(--reset);}
+.summary .chip.hold .num{color:var(--hold);}
 .summary .chip .lbl{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;}
 #hint{max-width:1720px;margin:40px auto;text-align:center;color:var(--text-dim);font-size:13px;padding:40px;border:1px dashed var(--line);border-radius:12px;}
 .grid{
@@ -749,6 +750,7 @@ Upload gear.txt <input type="file" id="fileInput" accept=".json,.txt">
 <option value="all">All</option>
 <option value="keep">Keep</option>
 <option value="sell">Sell</option>
+<option value="hold">Hold</option>
 <option value="reset">Reset</option>
 <option value="sold">Sold</option>
 <option value="discarded">Discarded</option>
@@ -837,6 +839,7 @@ Upload gear.txt <input type="file" id="fileInput" accept=".json,.txt">
 <div class="chip"><div class="num" id="sumTotal">0</div><div class="lbl">Evaluated</div></div>
 <div class="chip keep"><div class="num" id="sumKeep">0</div><div class="lbl">Keep</div></div>
 <div class="chip sell"><div class="num" id="sumSell">0</div><div class="lbl">Sell</div></div>
+<div class="chip hold"><div class="num" id="sumHold">0</div><div class="lbl">Hold</div></div>
 <div class="chip reset"><div class="num" id="sumReset">0</div><div class="lbl">Reset</div></div>
 <div class="chip sold"><div class="num" id="sumSold">0</div><div class="lbl">Sold</div></div>
 <div class="chip"><div class="num" id="sumSkipped">0</div><div class="lbl">Discarded (filter)</div></div>
@@ -845,6 +848,8 @@ Upload gear.txt <input type="file" id="fileInput" accept=".json,.txt">
 <button type="button" id="restoreAllBtn">↺ Restore all sold items</button>
 <button type="button" id="forgetSoldBtn">🗑 Forget sold history</button>
 </div>
+<div id="sellFab" title="Mark visible SELL pieces as sold">💰<span class="n">0</span></div>
+<div id="sellOnlyFab" title="Show only SELL pieces (toggle)">👁</div>
 <div id="hint"></div>
 <div class="grid" id="grid"></div>
 <div class="overlay" id="overlay">
@@ -1135,6 +1140,7 @@ PALETTE_SETTINGS: 'gearEvalPaletteSettings',
 PALETTE_CURRENT: 'gearEvalPalette_v121',
 PALETTE_FAVS: 'gearEvalFavs',
 MANUAL_OVERRIDES: 'gearManualOverrides_v1',
+SHORTCUTS: 'gearShortcuts_v1',
 };
 const decisionCache = new Map();
 function invalidateDecisionCache(){ decisionCache.clear(); }
@@ -1164,6 +1170,20 @@ render();
 }
 function unmarkSold(key){
 soldIds.delete(key);
+saveSoldIds();
+render();
+}
+let visibleKeys = [];
+let onlySell = false;
+function updateSellFab(){
+const f=document.getElementById('sellFab'); if(!f) return;
+f.querySelector('.n').textContent = visibleKeys.length;
+f.classList.toggle('empty', !visibleKeys.length);
+const o=document.getElementById('sellOnlyFab'); if(o) o.classList.toggle('on', onlySell);
+}
+function sellVisible(){
+if(!visibleKeys.length) return;
+visibleKeys.forEach(k=>soldIds.add(k));
 saveSoldIds();
 render();
 }
@@ -1574,6 +1594,7 @@ const grid = document.getElementById('grid');
 grid.innerHTML = '';
 document.getElementById('slotTabs').style.display='none';
 document.getElementById('soldToolbar').style.display='none';
+visibleKeys=[];
 const byHero = {};
 parsedItems.forEach(p=>{
 if(!p.heroName) return;
@@ -1587,10 +1608,10 @@ grid.classList.add('hero-view');
 if(heroNames.length===0){
 grid.innerHTML = `<div class="empty-hero-view">No pieces equipped to any hero in this file.</div>`;
 }
-let totalKeep=0, totalSell=0, totalReset=0;
+let totalKeep=0, totalSell=0, totalReset=0, totalHold=0;
 heroNames.forEach(name=>{
 const slots = byHero[name];
-let missing=0, sell=0, reset=0, keep=0;
+let missing=0, sell=0, reset=0, keep=0, hold=0;
 const rows = SLOT_ORDER.map(slotKey=>{
 const entry = slots[slotKey];
 if(!entry){
@@ -1602,7 +1623,8 @@ return `<div class="hero-slot-row empty">
 </div>`;
 }
 const {d} = entry;
-if(d.label==='SELL') sell++;
+if(d.label==='SELL' && heldIds.has(entry.p.key)) hold++;
+else if(d.label==='SELL'){ sell++; visibleKeys.push(entry.p.key); }
 else if(d.label==='RESET') reset++;
 else keep++;
 const statusHtml = (d.label==='SELL' && heldIds.has(entry.p.key))
@@ -1616,7 +1638,7 @@ return `<div class="hero-slot-row clickable" data-slot="${slotKey}" data-hero="$
 ${statusHtml}
 </div>`;
 }).join('');
-totalKeep+=keep; totalSell+=sell; totalReset+=reset;
+totalKeep+=keep; totalSell+=sell; totalReset+=reset; totalHold+=hold;
 const problems = sell+reset+missing;
 const summaryLine = problems===0
 ? `<div class="hero-card-summary ok">Full and keepable gear set</div>`
@@ -1624,7 +1646,7 @@ const summaryLine = problems===0
 const card = document.createElement('div');
 card.className = 'hero-card';
 card.innerHTML = `<div class="hero-card-name">${name}</div>${rows}${summaryLine}`;
-grid.appendChild(card);
+if(!onlySell || sell>0) grid.appendChild(card);
 });
 grid.querySelectorAll('.hero-slot-row.clickable').forEach(row=>{
 row.addEventListener('click', ()=>{
@@ -1650,6 +1672,7 @@ document.getElementById('sumTotal').textContent = heroNames.length;
 document.getElementById('sumKeep').textContent = totalKeep;
 document.getElementById('sumSell').textContent = totalSell;
 document.getElementById('sumReset').textContent = totalReset;
+document.getElementById('sumHold').textContent = totalHold;
 const soldEvaluated = parsedItems.filter(p=>soldIds.has(p.key)).length;
 const soldDiscarded = discardedItems.filter(it=>soldIds.has(itemKey(it))).length;
 document.getElementById('sumSold').textContent = soldEvaluated + soldDiscarded;
@@ -1662,9 +1685,11 @@ const viewMode = document.getElementById('viewModeSelect').value;
 const filterSelectEl = document.getElementById('filterSelect');
 const discardedOptEl = filterSelectEl.querySelector('option[value="discarded"]');
 const resetOptEl = filterSelectEl.querySelector('option[value="reset"]');
+const holdOptEl = filterSelectEl.querySelector('option[value="hold"]');
+if(holdOptEl) holdOptEl.hidden = (viewMode==='archetypes');
 if(discardedOptEl) discardedOptEl.hidden = (viewMode==='archetypes');
 if(resetOptEl) resetOptEl.hidden = (viewMode==='archetypes');
-if(viewMode==='archetypes' && (filterSelectEl.value==='discarded' || filterSelectEl.value==='reset')){
+if(viewMode==='archetypes' && (filterSelectEl.value==='discarded' || filterSelectEl.value==='reset' || filterSelectEl.value==='hold')){
 filterSelectEl.value = 'all';
 }
 if(parsedItems.length){ renderSlotTabs(); populateSetSelect(); populateArchFilterSelect(); }
@@ -1732,7 +1757,8 @@ if(levelVal!=='all') unidList = [];
 list = list.concat(unidList);
 list = list.filter(x=>!soldIds.has(x.key));
 if(filterVal==='keep') list = list.filter(x=>x.d && x.d.label==='KEEP');
-if(filterVal==='sell') list = list.filter(x=>x.d && x.d.label==='SELL');
+if(filterVal==='hold') list = list.filter(x=>x.d && x.d.label==='SELL' && heldIds.has(x.key));
+if(filterVal==='sell') list = list.filter(x=>x.d && x.d.label==='SELL' && !heldIds.has(x.key));
 if(filterVal==='reset') list = list.filter(x=>x.d && x.d.label==='RESET');
 }
 const archVal = document.getElementById('archFilterSelect').value;
@@ -1750,14 +1776,17 @@ list = list.filter(x=>quickMainStatFilter.includes((x.p || parseItemBasic(x.raw)
 }
 if(sortVal==='age_new') list.sort((a,b)=>((b.raw.ct||0)-(a.raw.ct||0))||((b.raw.id||0)-(a.raw.id||0)));
 if(sortVal==='age_old') list.sort((a,b)=>((a.raw.ct||0)-(b.raw.ct||0))||((a.raw.id||0)-(b.raw.id||0)));
+visibleKeys = (showingSold||showingDiscarded) ? [] : list.filter(x=>x.d && x.d.label==='SELL' && !heldIds.has(x.key)).map(x=>x.key);
 const frag = document.createDocumentFragment();
-list.forEach(entry=>{
+const shownList = (onlySell && !showingSold && !showingDiscarded) ? list.filter(x=>x.d && x.d.label==='SELL' && !heldIds.has(x.key)) : list;
+shownList.forEach(entry=>{
 frag.appendChild(buildCard(entry, cardMode));
 });
 grid.appendChild(frag);
 document.getElementById('sumTotal').textContent = list.length;
 document.getElementById('sumKeep').textContent = list.filter(x=>x.d && x.d.label==='KEEP').length;
-document.getElementById('sumSell').textContent = list.filter(x=>x.d && x.d.label==='SELL').length;
+document.getElementById('sumHold').textContent = list.filter(x=>x.d && x.d.label==='SELL' && heldIds.has(x.key)).length;
+document.getElementById('sumSell').textContent = list.filter(x=>x.d && x.d.label==='SELL' && !heldIds.has(x.key)).length;
 document.getElementById('sumReset').textContent = list.filter(x=>x.d && x.d.label==='RESET').length;
 const soldEvaluated = parsedItems.filter(p=>soldIds.has(p.key)).length;
 const soldDiscarded = discardedItems.filter(it=>soldIds.has(itemKey(it))).length;
@@ -2162,6 +2191,77 @@ alert('Could not read gear.txt: '+err.message);
 };
 reader.readAsText(file);
 });
+document.getElementById('sellFab').addEventListener('click', sellVisible);
+function toggleOnlySell(){ onlySell=!onlySell; if(parsedItems.length) render(); else updateSellFab(); }
+document.getElementById('sellOnlyFab').addEventListener('click', toggleOnlySell);
+
+// ---- Keyboard shortcuts ----
+const SHORTCUT_ACTIONS = [
+{id:'sellAll', label:'Sell visible SELL pieces', run:()=>sellVisible()},
+{id:'onlySell', label:'Show only SELL (toggle)', run:()=>toggleOnlySell()},
+];
+let SHORTCUTS = {};
+try{ SHORTCUTS = JSON.parse(localStorage.getItem(STORAGE_KEYS.SHORTCUTS) || '{}') || {}; }catch(e){ SHORTCUTS = {}; }
+let scDraft = null;
+let scCapturing = null;
+let scWarning = '';
+function comboFromEvent(e){
+if(['Control','Shift','Alt','Meta','AltGraph'].includes(e.key)) return null;
+let k = e.key;
+if(k===' ') k = 'Space';
+else if(k.length===1) k = k.toUpperCase();
+const parts = [];
+if(e.ctrlKey) parts.push('Ctrl');
+if(e.altKey) parts.push('Alt');
+if(e.shiftKey) parts.push('Shift');
+if(e.metaKey) parts.push('Meta');
+parts.push(k);
+return parts.join('+');
+}
+function comboLabel(c){ return c ? c.split('+').join(' + ') : ''; }
+function renderShortcutsPanel(){
+const box = document.getElementById('scPanel');
+if(!box || !scDraft) return;
+box.innerHTML = SHORTCUT_ACTIONS.map(a=>{
+const c = scDraft[a.id];
+const capturing = scCapturing===a.id;
+return `<div class="sc-row">
+<div class="sc-label">${a.label}</div>
+<button type="button" class="sc-key ${capturing?'capturing':''}" data-sc="${a.id}">${capturing ? 'Press keys…' : (c ? comboLabel(c) : 'Not set')}</button>
+<button type="button" class="sc-clear" data-sc-clear="${a.id}" title="Remove shortcut" ${c?'':'disabled'}>✕</button>
+</div>`;
+}).join('') + `<div class="sc-warn">${scWarning}</div>`;
+box.querySelectorAll('.sc-key').forEach(b=>b.addEventListener('click', ()=>{
+scCapturing = b.dataset.sc; scWarning = ''; renderShortcutsPanel();
+}));
+box.querySelectorAll('.sc-clear').forEach(b=>b.addEventListener('click', ()=>{
+scDraft[b.dataset.scClear] = null; scCapturing = null; scWarning = ''; renderShortcutsPanel();
+}));
+}
+document.addEventListener('mousedown', (e)=>{
+if(scCapturing && !e.target.closest('.sc-key.capturing')){ scCapturing = null; renderShortcutsPanel(); }
+}, true);
+document.addEventListener('keydown', (e)=>{
+if(scCapturing){
+e.preventDefault(); e.stopPropagation();
+const c = comboFromEvent(e);
+if(!c) return;
+const clash = SHORTCUT_ACTIONS.find(a=>a.id!==scCapturing && scDraft[a.id]===c);
+if(clash){ scWarning = comboLabel(c)+' is already used by "'+clash.label+'".'; renderShortcutsPanel(); return; }
+scDraft[scCapturing] = c; scCapturing = null; scWarning = '';
+renderShortcutsPanel();
+return;
+}
+const t = e.target;
+if(t && (t.tagName==='INPUT' || t.tagName==='TEXTAREA' || t.tagName==='SELECT' || t.isContentEditable)) return;
+if(document.getElementById('configOverlay').classList.contains('open')) return;
+const c = comboFromEvent(e);
+if(!c) return;
+const act = SHORTCUT_ACTIONS.find(a=>SHORTCUTS[a.id]===c);
+if(act){ e.preventDefault(); act.run(); }
+}, true);
+const _renderBase = render;
+render = function(){ _renderBase.apply(this, arguments); updateSellFab(); };
 document.getElementById('restoreAllBtn').addEventListener('click', restoreAllSold);
 document.getElementById('forgetSoldBtn').addEventListener('click', forgetSoldHistory);
 ['filterSelect','sortSelect','setSelect','rankSelect','levelSelect','convSelect','viewModeSelect','archFilterSelect'].forEach(id=>{
@@ -2349,8 +2449,9 @@ const tc = cfgDraft.tiers[tier];
 const isC1 = cfgViewCriterion===1;
 const isC2 = cfgViewCriterion===2;
 const isC3 = cfgViewCriterion===3;
+const isC4 = cfgViewCriterion===4;
 const realRange = ROLL_RANGES[tier];
-const tableHtml = isC3 ? `
+const tableHtml = isC4 ? '' : isC3 ? `
 <div class="cfg2-rows">
 ${CATS.map(c=>{
 const rr = realRange[c];
@@ -2408,7 +2509,7 @@ return `<td>
 </table></div>
 `;})();
 const critTitle = isC3 ? 'Reset settings' : (isC1?'Method 1':'Method 2');
-const extraSectionsHtml = isC3 ? `
+const extraSectionsHtml = isC4 ? `<div class="cfg2-sectiontitle">Keyboard shortcuts</div>\n<div id="scPanel"></div>` : isC3 ? `
 <div class="cfg2-sectiontitle">Points to reset</div>
 <div class="cfg2-toggleline">
 <div class="cfg2-toggleline-left">
@@ -2451,12 +2552,13 @@ content.innerHTML = `
 <button type="button" class="cfg2-pill ${tc.activeCriterion===1?'active':(isC1?'active ghost':'')}" id="cfgToggle1">Method 1</button>
 <button type="button" class="cfg2-pill ${tc.activeCriterion===2?'active':(isC2?'active ghost':'')}" id="cfgToggle2">Method 2</button>
 <button type="button" class="cfg2-pill ${isC3?'active ghost':''}" id="cfgToggle3">Reset settings${tc.resetEnabled===false?' (off)':''}</button>
+<button type="button" class="cfg2-pill ${isC4?'active ghost':''}" id="cfgToggle4">Shortcuts</button>
 </div>
-<div class="cfg2-tabgroup">
+${isC4 ? '' : `<div class="cfg2-tabgroup">
 ${TIERS.map(t=>`<button type="button" class="cfg2-pill cfgTierBtn ${t===tier?'active':''}" data-tier="${t}">${TIER_SHORT_LABEL[t]}</button>`).join('')}
+</div>`}
 </div>
-</div>
-${(isC1||isC2||isC3) ? '' : `<div class="cfg2-sectiontitle">Minimum acceptable per roll</div>`}
+${(isC1||isC2||isC3||isC4) ? '' : `<div class="cfg2-sectiontitle">Minimum acceptable per roll</div>`}
 ${tableHtml}
 ${extraSectionsHtml}
 <div class="cfg2-savebar">
@@ -2500,6 +2602,13 @@ captureDraftFromDOM(content);
 cfgViewCriterion = 3;
 renderConfigModal();
 });
+document.getElementById('cfgToggle4').addEventListener('click', ()=>{
+if(cfgViewCriterion===4) return;
+captureDraftFromDOM(content);
+cfgViewCriterion = 4;
+renderConfigModal();
+});
+if(isC4) renderShortcutsPanel();
 content.querySelectorAll('.conv-box:not(.disabled)').forEach(box=>{
 box.addEventListener('click', ()=>{
 const c = box.dataset.convCat, n = box.dataset.convN;
@@ -2573,6 +2682,8 @@ document.getElementById('cfgSaveBtn').addEventListener('click', ()=>{
 captureDraftFromDOM(content);
 CONFIG = JSON.parse(JSON.stringify(cfgDraft));
 localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(CONFIG));
+if(scDraft){ SHORTCUTS = JSON.parse(JSON.stringify(scDraft)); try{ localStorage.setItem(STORAGE_KEYS.SHORTCUTS, JSON.stringify(SHORTCUTS)); }catch(err){} }
+scCapturing = null;
 invalidateDecisionCache();
 cfgDraft = null;
 document.getElementById('configOverlay').classList.remove('open');
@@ -2581,6 +2692,7 @@ if(parsedItems.length) requestAnimationFrame(render);
 }
 document.getElementById('openConfigBtn').addEventListener('click', ()=>{
 cfgDraft = JSON.parse(JSON.stringify(CONFIG));
+scDraft = JSON.parse(JSON.stringify(SHORTCUTS)); scCapturing = null; scWarning = '';
 cfgViewCriterion = cfgDraft.tiers[cfgDraft.activeTier].activeCriterion;
 renderConfigModal();
 document.getElementById('configOverlay').classList.add('open');
@@ -2778,6 +2890,7 @@ const convVal = document.getElementById('convSelect').value;
 const sortVal = document.getElementById('sortSelect').value;
 const showingSold = filterVal==='sold';
 document.getElementById('soldToolbar').style.display = showingSold ? 'flex' : 'none';
+visibleKeys=[];
 const fullInventory = parsedItems.concat(discardedItems.map(parseItemBasic));
 let list = showingSold
 ? fullInventory.filter(p=>soldIds.has(p.key))
@@ -2800,10 +2913,12 @@ if(sortVal==='age_old') list.sort((a,b)=>((a.raw.ct||0)-(b.raw.ct||0))||((a.raw.
 let matched = list.map(p=>({p, matches: archetypes.filter(a=>matchGearToArchetype(p,a))}));
 if(filterVal==='keep') matched = matched.filter(x=>x.matches.length>0);
 if(filterVal==='sell') matched = matched.filter(x=>x.matches.length===0);
+visibleKeys = showingSold ? [] : matched.filter(x=>x.matches.length===0).map(x=>x.p.key);
 let matchCount=0, noMatchCount=0;
 const archFrag = document.createDocumentFragment();
 matched.forEach(({p, matches})=>{
 if(matches.length) matchCount++; else noMatchCount++;
+if(onlySell && !showingSold && matches.length) return;
 archFrag.appendChild(buildArchCard(p, matches));
 });
 grid.appendChild(archFrag);
@@ -2811,6 +2926,7 @@ document.getElementById('sumTotal').textContent = matched.length;
 document.getElementById('sumKeep').textContent = matchCount;
 document.getElementById('sumSell').textContent = noMatchCount;
 document.getElementById('sumReset').textContent = 0;
+document.getElementById('sumHold').textContent = 0;
 const soldEvaluated = parsedItems.filter(p=>soldIds.has(p.key)).length;
 const soldDiscarded = discardedItems.filter(it=>soldIds.has(itemKey(it))).length;
 document.getElementById('sumSold').textContent = soldEvaluated + soldDiscarded;
@@ -3214,6 +3330,37 @@ cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,0.5);
 font-size:20px;user-select:none;transition:transform .12s;
 }
 #ieFab:hover{transform:scale(1.08);}
+#sellFab{
+position:fixed;bottom:22px;right:138px;z-index:9999;
+width:48px;height:48px;border-radius:50%;
+background:linear-gradient(180deg,var(--gold-bright),var(--gold));
+border:2px solid var(--gold-dim);color:#2a1608;
+display:flex;align-items:center;justify-content:center;
+cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,0.5);
+font-size:20px;user-select:none;transition:transform .12s,opacity .12s;
+}
+#sellFab:hover{transform:scale(1.08);}
+.sc-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.sc-label{flex:1;color:var(--text);font-size:14px;}
+.sc-key{min-width:170px;padding:8px 12px;border-radius:8px;border:1px solid var(--cfg-line);background:var(--bg-1);color:var(--text);cursor:pointer;font-size:13px;font-weight:700;}
+.sc-key.capturing{border-color:var(--gold-bright);color:var(--gold-bright);}
+.sc-clear{width:32px;height:32px;border-radius:8px;border:1px solid var(--cfg-line);background:transparent;color:var(--text);cursor:pointer;}
+.sc-clear:disabled{opacity:.3;cursor:default;}
+.sc-warn{min-height:18px;color:var(--sell);font-size:12px;}
+#sellOnlyFab{
+position:fixed;bottom:22px;right:196px;z-index:9999;
+width:48px;height:48px;border-radius:50%;
+background:linear-gradient(180deg,var(--panel-2),var(--bg-1));
+border:2px solid var(--gold-dim);color:var(--text);
+display:flex;align-items:center;justify-content:center;
+cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,0.5);
+font-size:20px;user-select:none;transition:transform .12s;
+}
+#sellOnlyFab:hover{transform:scale(1.08);}
+#sellOnlyFab.on{background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#2a1608;}
+#sellFab.empty{opacity:.4;cursor:default;}
+#sellFab.empty:hover{transform:none;}
+#sellFab .n{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;box-sizing:border-box;border-radius:10px;background:var(--sell);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg-1);}
 #iePanel{
 position:fixed;bottom:80px;right:80px;z-index:9999;
 width:300px;max-width:calc(100vw - 32px);
